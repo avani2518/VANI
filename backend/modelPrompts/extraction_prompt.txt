@@ -1,0 +1,38 @@
+Extract structured data from OCR text.
+
+DOCUMENT TYPE: {document_type}
+
+Rules:
+
+- Extract ONLY fields relevant to the given document type
+- DO NOT extract fields from other document types
+- DO NOT guess values
+- Keep OCR values as-is
+- Return STRICT JSON only
+
+Output format:
+
+{
+  "name": "",
+  "dob": "",
+  "gender": "",
+  "aadhaarNumber": "",
+  "panNumber": "",
+  "licenseNumber": "",
+  "passportNumber": "",
+  "address": "",
+  "issueDate": "",
+  "expiryDate": "",
+  "nationality": "",
+  "placeOfBirth": ""
+}
+
+Rules:
+- Only include fields relevant to DOCUMENT TYPE
+- Remove unused fields
+- No empty fields
+
+OCR TEXT:
+"""
+{ocr_text}
+"""

@@ -1,0 +1,39 @@
+{
+"form_type": "aadhaar_application_or_update",
+"personal_details": {
+"full_name": "$",
+"gender": "$",
+"date_of_birth": "$",
+"age": "$",
+"mobile_number": "$",
+"email_id": "$"
+},
+"address_details": {
+"care_of": "$",
+"house_no_building": "$",
+"street_road_lane": "$",
+"landmark": "$",
+"area_locality_sector": "$",
+"village_town_city": "$",
+"post_office": "$",
+"district": "$",
+"state": "$",
+"pincode": "$"
+},
+"identity_information": {
+"aadhaar_number": "$",
+"enrollment_id": "$",
+"update_type": {
+"name_update": "$",
+"address_update": "$",
+"dob_update": "$",
+"mobile_update": "$",
+"email_update": "$"
+}
+},
+"documents_submitted": {
+"proof_of_identity": "$",
+"proof_of_address": "$",
+"proof_of_dob": "$"
+}
+}
