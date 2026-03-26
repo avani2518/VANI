@@ -14,14 +14,14 @@ from utils.prompt_loader import build_form_filling_prompt
 import os
 from rapidocr_onnxruntime import RapidOCR
 
-# 🔷 Load env
+# Load env
 load_dotenv()
 
 app = Flask(__name__)
 
 ocr = RapidOCR()
 
-# 🔷 Load API Key
+# Load API Key
 API_KEY = os.getenv("NVIDIA_API_KEY")
 
 client = OpenAI(
@@ -43,7 +43,6 @@ def preprocess_image(image_bytes):
     if img is None or img.size == 0:
         raise Exception("Image conversion failed")
 
-    # 🔥 Light enhancement only (no grayscale needed)
     img = cv2.convertScaleAbs(img, alpha=1.2, beta=10)
 
     return img
@@ -56,7 +55,7 @@ def extract_text(image):
         print("OCR Error:", e)
         return ""
 
-    # print("RAW OCR RESULT:", result)
+    print("RAW OCR RESULT:", result)
 
     texts = []
 
@@ -98,11 +97,11 @@ def call_model(ocr_text, doc_type):
     prompt = load_prompt(PROMPT_PATH, ocr_text, doc_type)
 
     completion = client.chat.completions.create(
-        model="deepseek-ai/deepseek-v3.1-terminus",  # ✅ updated model
+        model="deepseek-ai/deepseek-v3.1-terminus",  # model
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,  # 🔥 IMPORTANT (reduce hallucination)
+        temperature=0.0,  # reduce hallucination
         top_p=0.7,
-        max_tokens=2048,  # you don’t need 8192 here
+        max_tokens=2048, 
         extra_body={"chat_template_kwargs": {"thinking": False}},
         stream=True
     )
@@ -120,10 +119,10 @@ def call_model(ocr_text, doc_type):
 
     output = output.strip()
 
-    # 🔥 Clean common formatting issues
+    # 
     output = output.replace("```json", "").replace("```", "").strip()
 
-    # 🔥 Parse JSON safely
+    # Parse JSON
     try:
         parsed = json.loads(output)
         return parsed
@@ -176,7 +175,7 @@ def clean_ocr_for_model(text):
 
 def fill_form(extracted_data, form_type):
     
-    # Load form structure dynamically
+    # Load form structure 
     with open(f"formStructures/{form_type}.json", "r") as f:
         form_structure = json.load(f)
 
@@ -213,7 +212,7 @@ def fill_form(extracted_data, form_type):
         }
 
 
-# 🔷 Routes
+# Routes
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({"message": "OCR → Model API (Production Ready)"})
@@ -248,7 +247,7 @@ def extract_multiple():
         #     "documents": response
         # })
 
-        # 🔥 Call form filling
+        # Call form filling
         form_type = "aadhaar_form"  # or get dynamically from frontend later
 
         filled_form = fill_form(
@@ -273,6 +272,6 @@ def extract_multiple():
         return jsonify({"error": str(e)}), 500
 
 
-# 🔷 Run
+# Run
 if __name__ == '__main__':
     app.run(debug=True)
