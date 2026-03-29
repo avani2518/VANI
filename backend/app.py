@@ -101,7 +101,7 @@ def call_model(ocr_text, doc_type):
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,  # reduce hallucination
         top_p=0.7,
-        max_tokens=2048, 
+        max_tokens=1024, 
         extra_body={"chat_template_kwargs": {"thinking": False}},
         stream=True
     )
@@ -185,7 +185,7 @@ def fill_form(extracted_data, form_type):
         model="deepseek-ai/deepseek-v3.1-terminus",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,
-        max_tokens=2048,
+        max_tokens=4096,
         extra_body={"chat_template_kwargs": {"thinking": False}},
         stream=True
     )
