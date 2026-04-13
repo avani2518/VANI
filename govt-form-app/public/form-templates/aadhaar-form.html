@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<!--
+  AADHAAR ENROLMENT / CORRECTION / UPDATE FORM  v3
+  JSON-driven: all field values and states derived from FORM_DATA.
+  Audio buttons toggle speak/stop on repeated click.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aadhaar Enrolment / Correction / Update Form</title>
+  <link rel="stylesheet" href="form-base.css" />
+  <style>
+    .doc-rows { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
+    .section-row-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 11px;
+    }
+    @media (max-width: 580px) { .section-row-2col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="form-page-wrapper">
+  <div class="form-card">
+
+    <!-- ══ Header ══════════════════════════════════════════ -->
+    <div class="form-header">
+      <div style="width:52px; display:flex; align-items:center; justify-content:center;">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="23" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+          <circle cx="24" cy="24" r="16" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+          <text x="24" y="28" text-anchor="middle" font-size="16" fill="white">🇮🇳</text>
+        </svg>
+      </div>
+      <div class="header-title-block">
+        <div class="gov-label">Unique Identification Authority of India · Government of India</div>
+        <div class="form-title">Aadhaar Enrolment / Correction / Update</div>
+        <div class="form-subtitle">Under Section 3 of The Aadhaar (Targeted Delivery of Financial and Other Subsidies, Benefits and Services) Act, 2016</div>
+      </div>
+      <div style="width:52px; display:flex; align-items:center; justify-content:center;">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <rect width="48" height="48" rx="8" fill="rgba(255,255,255,0.12)"/>
+          <text x="24" y="32" text-anchor="middle" font-size="24" fill="white">🪪</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ══ Red Title Bar ════════════════════════════════════ -->
+    <div class="form-title-bar">Aadhaar Enrolment / Correction / Update Form</div>
+
+    <!-- ══ Notice ═══════════════════════════════════════════ -->
+    <div class="aadhaar-notice">
+      <strong>Free Service:</strong> Aadhaar Enrolment and Mandatory Biometric Update are free of charge. No charges are applicable for the Form.
+      In case of Correction / Update, provide your Aadhaar Number (UID). Fill only the field(s) that require update.
+    </div>
+
+    <!-- ══ Applicant Type ════════════════════════════════════ -->
+    <div class="applicant-type-bar">
+      <label><input type="radio" name="applicantType" value="resident" checked /> Resident</label>
+      <label><input type="radio" name="applicantType" value="nri" /> Non-Resident Indian (NRI)</label>
+      <span class="note">Please follow instructions overleaf. Use CAPITAL LETTERS only.</span>
+    </div>
+
+    <!-- ══ Progress Bar ══════════════════════════════════════ -->
+    <div class="form-progress-bar">
+      <span class="progress-label">Completion</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+
+    <!-- ══ Legend ════════════════════════════════════════════ -->
+    <div class="form-legend">
+      <div class="legend-item"><span class="legend-dot filled"></span> Auto-filled from your documents</div>
+      <div class="legend-item"><span class="legend-dot empty"></span> Requires your input</div>
+      <span class="legend-tip">Click any field to see instructions · 🔊 for voice</span>
+    </div>
+
+    <!-- ══ Form Body ═════════════════════════════════════════ -->
+    <div class="form-body" id="formBody">
+      <!-- Rendered by JS from FORM_DATA -->
+    </div>
+
+    <!-- ══ Footer ═══════════════════════════════════════════ -->
+    <div class="form-footer">
+      <button class="btn btn-ghost" id="resetBtn">↺ Reset</button>
+      <button class="btn btn-danger" onclick="window.print()">🖨 Print Form</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   FORM DATA  — Replace this object when a new API response arrives.
+   Values that are "$" mean "user must fill"; anything else is auto-filled.
+   ═══════════════════════════════════════════════════════════════ */
+
+
+const FORM_DATA = {
+  "filled_form": {
+        "address_details": {
+            "area_locality_sector": "$",
+            "care_of": "$",
+            "district": "$",
+            "house_no_building": "123TestStreet",
+            "landmark": "NearDemoPark",
+            "pincode": "411001",
+            "post_office": "$",
+            "state": "Maharashtra",
+            "street_road_lane": "$",
+            "village_town_city": "Pune"
+        },
+        "documents_submitted": {
+            "proof_of_address": "Aadhaar",
+            "proof_of_dob": "Aadhaar",
+            "proof_of_identity": "Aadhaar"
+        },
+        "form_type": "aadhaar_application_or_update",
+        "identity_information": {
+            "aadhaar_number": "123456789012",
+            "enrollment_id": "$",
+            "update_type": {
+                "address_update": "yes",
+                "dob_update": "yes",
+                "email_update": "$",
+                "mobile_update": "$",
+                "name_update": "yes"
+            }
+        },
+        "personal_details": {
+            "age": "$",
+            "date_of_birth": "15/06/1995",
+            "email_id": "$",
+            "full_name": "John Doe",
+            "gender": "Male",
+            "mobile_number": "$"
+        }
+    },
+    "status": "success"
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+const fd = FORM_DATA.filled_form;
+
+function isFilled(val) { return val && val !== "$"; }
+
+/* Build the audio-toggle SVG button */
+function audioBtn() {
+  return `<button class="audio-btn" onclick="event.stopPropagation(); FormAssistant.toggleSpeak(this)" title="Read / stop instruction">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+  </button>`;
+}
+
+/* Build a standard text/tel/email/number field wrapper */
+function fieldWrapper({ id, label, type = "text", value, placeholder, instruction, optional = false, spanTwo = false, extraAttrs = "" }) {
+  const filled  = isFilled(value);
+  const stateClass = filled   ? "is-filled"
+                   : optional ? "is-empty"   // optional still gets is-empty style (amber) but excluded from progress
+                   : "is-empty";
+  const badge = filled   ? `<span class="field-badge badge-filled">Auto-filled</span>`
+              : optional ? `<span class="field-badge badge-optional">Optional</span>`
+              :             `<span class="field-badge badge-empty">Required</span>`;
+  const icon    = filled ? "✅" : "📌";
+  const val     = filled ? `value="${escHtml(value)}"` : "";
+  const spanCls = spanTwo ? " span-2" : "";
+  const optAttr = optional ? ' data-optional="true"' : "";
+
+  return `
+    <div class="field-wrapper ${stateClass}${spanCls}" id="wrapper-${id}"${optAttr}>
+      <div class="field-label-row">
+        <span class="field-label">${label}</span>
+        ${badge}
+        ${audioBtn()}
+      </div>
+      <input class="form-input" id="field-${id}" type="${type}" ${val} placeholder="${placeholder}" ${extraAttrs} />
+      <div class="field-instruction">
+        <div class="instruction-inner">
+          <span class="inst-icon">${icon}</span>
+          <span class="inst-text">${instruction}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION RENDERERS
+   ═══════════════════════════════════════════════════════════════ */
+
+function renderSection1() {
+  const uid    = fd.identity_information.aadhaar_number;
+  const enroll = fd.identity_information.enrollment_id;
+  const uidFilled  = isFilled(uid);
+  const enrFilled  = isFilled(enroll);
+
+  const enrollInst = enrFilled
+    ? `Your Pre-Enrolment ID was auto-filled as "${enroll}" from your submitted documents. Verify this is correct. If incorrect, update the value here.`
+    : `Enter your Pre-Enrolment ID if you were given one during a previous enrolment attempt. This field is optional — leave it blank if you do not have one.`;
+
+  const uidInst = uidFilled
+    ? `Your Aadhaar number was auto-filled as ${uid} from your submitted documents. Verify each digit carefully. If incorrect, click the field and type your correct 12-digit Aadhaar number — it will be formatted automatically.`
+    : `Enter your 12-digit Aadhaar number exactly as printed on your Aadhaar card. It will auto-format with spaces as you type.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">1</span> Identification Numbers</div>
+      <div class="section-row-2col">
+
+        <!-- Pre-Enrolment ID — Optional -->
+        <div class="field-wrapper ${enrFilled ? 'is-filled' : 'is-empty'}" id="wrapper-enrollment-id" data-optional="true">
+          <div class="field-label-row">
+            <span class="field-label">Pre-Enrolment ID</span>
+            <span class="field-badge badge-optional">Optional</span>
+            ${audioBtn()}
+          </div>
+          <input class="form-input" id="field-enrollment-id" type="text"
+            ${enrFilled ? `value="${escHtml(enroll)}"` : ''}
+            placeholder="Enter if applicable" />
+          <div class="field-instruction"><div class="instruction-inner">
+            <span class="inst-icon">${enrFilled ? '✅' : '📌'}</span>
+            <span class="inst-text">${enrollInst}</span>
+          </div></div>
+        </div>
+
+        <!-- Aadhaar Number -->
+        <div class="field-wrapper ${uidFilled ? 'is-filled' : 'is-empty'}" id="wrapper-aadhaar-number">
+          <div class="field-label-row">
+            <span class="field-label">Aadhaar Number (UID)</span>
+            ${uidFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+            ${audioBtn()}
+          </div>
+          <div class="uid-input-wrapper">
+            <input class="uid-full-input" id="field-aadhaar-number" type="text"
+              inputmode="numeric" maxlength="14"
+              ${uidFilled ? `value="${escHtml(uid)}"` : ''}
+              placeholder="XXXX XXXX XXXX" />
+            <span class="uid-format-hint">12 digits</span>
+          </div>
+          <div class="field-instruction"><div class="instruction-inner">
+            <span class="inst-icon">${uidFilled ? '✅' : '📌'}</span>
+            <span class="inst-text">${uidInst}</span>
+          </div></div>
+        </div>
+
+      </div>
+    </div>`;
+}
+
+function renderSection2() {
+  const ut = fd.identity_information.update_type;
+  const UPDATE_FIELDS = [
+    { key: 'name_update',    label: 'Name'          },
+    { key: 'address_update', label: 'Address'       },
+    { key: 'dob_update',     label: 'Date of Birth' },
+    { key: 'mobile_update',  label: 'Mobile'        },
+    { key: 'email_update',   label: 'Email'         },
+  ];
+  const selectedLabels = UPDATE_FIELDS.filter(f => isFilled(ut[f.key])).map(f => f.label);
+  const anyFilled = selectedLabels.length > 0;
+
+  const inst = anyFilled
+    ? `Based on your documents, ${selectedLabels.join(", ")} ${selectedLabels.length === 1 ? 'has' : 'have'} been pre-selected for update. Review all checked fields and tick or untick any that need to change. Only the selected fields will be processed during your Aadhaar update.`
+    : `Tick every field you want to correct or update. Only the selected fields will be processed. Do not tick fields you are not changing.`;
+
+  const checkboxes = UPDATE_FIELDS.map(f => {
+    const checked = isFilled(ut[f.key]);
+    return `<label class="update-checkbox${checked ? ' checked' : ''}">
+      <input type="checkbox" ${checked ? 'checked' : ''} data-update-key="${f.key}" /> ${f.label}
+    </label>`;
+  }).join('');
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">2.1</span> Fields Requiring Correction / Update</div>
+      <div class="field-wrapper ${anyFilled ? 'is-filled' : 'is-empty'}" id="wrapper-update-type">
+        <div class="field-label-row">
+          <span class="field-label">Tick fields to update</span>
+          ${anyFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+          ${audioBtn()}
+        </div>
+        <div class="update-type-grid" id="updateTypeGrid">${checkboxes}</div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">${anyFilled ? '✅' : '📌'}</span>
+          <span class="inst-text">${inst}</span>
+        </div></div>
+      </div>
+    </div>`;
+}
+
+function renderSection3() {
+  const pd = fd.personal_details;
+
+  const nameInst  = isFilled(pd.full_name)
+    ? `Full Name was auto-filled as "${pd.full_name}" from your submitted documents. Ensure this is your complete legal name exactly as it appears on your official ID. If incorrect, click the field and type the correct name.`
+    : `Enter your complete legal name as it appears on your official identity document. Use capital letters. Do not use initials — write the full name.`;
+
+  const genderVal = pd.gender;
+  const genderFilled = isFilled(genderVal);
+  const genderInst = genderFilled
+    ? `Gender was auto-filled as "${genderVal}" from your documents. Please verify and select the correct option. This must match your official records.`
+    : `Select your gender as recorded in your official identity documents.`;
+
+  const dobInst = isFilled(pd.date_of_birth)
+    ? `Date of Birth was auto-filled as ${pd.date_of_birth} from your submitted documents. Cross-check this against your birth certificate or valid government ID. The format must be Day/Month/Year. Update if the date is incorrect.`
+    : `Enter your date of birth in DD/MM/YYYY format. This must match your official proof of date of birth document.`;
+
+  const ageInst = isFilled(pd.age)
+    ? `Age was auto-filled as "${pd.age}" from your documents. Verify this is your age in completed years.`
+    : `Enter your age in completed years only if you are unable to provide a Date of Birth. If you have already filled in the Date of Birth, you may leave this field blank.`;
+
+  const mobInst = isFilled(pd.mobile_number)
+    ? `Mobile number was auto-filled as "${pd.mobile_number}" from your documents. Verify this is your active 10-digit number linked to Aadhaar.`
+    : `Enter a valid 10-digit Indian mobile number without spaces or the country code. This number will be linked to your Aadhaar and used for OTP-based verification.`;
+
+  const emailInst = isFilled(pd.email_id)
+    ? `Email was auto-filled as "${pd.email_id}" from your documents. Verify this is the correct email address.`
+    : `Providing an email address is optional but recommended. It will be used for Aadhaar-related notifications and updates. Enter a valid address you regularly check.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">3</span> Personal Details</div>
+      <div class="fields-grid">
+
+        ${fieldWrapper({
+          id: "full-name", label: "Full Name", value: pd.full_name,
+          placeholder: "Full name as per documents", instruction: nameInst, spanTwo: true
+        })}
+
+        <!-- Gender (radio) -->
+        <div class="field-wrapper ${genderFilled ? 'is-filled' : 'is-empty'}" id="wrapper-gender">
+          <div class="field-label-row">
+            <span class="field-label">Gender</span>
+            ${genderFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+            ${audioBtn()}
+          </div>
+          <div class="checkbox-group">
+            ${['Male','Female','Transgender'].map(g =>
+              `<label class="checkbox-item"><input type="radio" name="gender" value="${g}" ${genderFilled && pd.gender === g ? 'checked' : ''} /> ${g}</label>`
+            ).join('')}
+          </div>
+          <div class="field-instruction"><div class="instruction-inner">
+            <span class="inst-icon">${genderFilled ? '✅' : '📌'}</span>
+            <span class="inst-text">${genderInst}</span>
+          </div></div>
+        </div>
+
+        ${fieldWrapper({
+          id: "dob", label: "Date of Birth (DD/MM/YYYY)", value: pd.date_of_birth,
+          placeholder: "DD/MM/YYYY", instruction: dobInst
+        })}
+
+        ${fieldWrapper({
+          id: "age", label: "Age (Years)", type: "number", value: pd.age,
+          placeholder: "Only if DOB is unavailable", instruction: ageInst,
+          optional: true, extraAttrs: 'min="0" max="150"'
+        })}
+
+        ${fieldWrapper({
+          id: "mobile", label: "Mobile Number", type: "tel", value: pd.mobile_number,
+          placeholder: "10-digit mobile number", instruction: mobInst,
+          extraAttrs: 'maxlength="10"'
+        })}
+
+        ${fieldWrapper({
+          id: "email", label: "Email ID", type: "email", value: pd.email_id,
+          placeholder: "yourname@email.com (optional)", instruction: emailInst,
+          optional: true
+        })}
+
+      </div>
+    </div>`;
+}
+
+function renderSection6() {
+  const ad = fd.address_details;
+  const STATES = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi (NCT)","Jammu &amp; Kashmir (UT)","Ladakh (UT)","Chandigarh (UT)","Puducherry (UT)"];
+
+  const stateFilled = isFilled(ad.state);
+  const stateInst = stateFilled
+    ? `State was auto-filled as "${ad.state}" from your documents. Verify this is the state of your current residential address. Use the dropdown to change it if incorrect.`
+    : `Select the state where you currently reside. This must match your address proof document.`;
+
+  const pinFilled = isFilled(ad.pincode);
+  const pinInst = pinFilled
+    ? `PIN Code was auto-filled as ${ad.pincode} from your documents. Verify this is the correct 6-digit postal code for your area. If you live at a different address, enter the PIN code for that location.`
+    : `Enter the 6-digit postal code (PIN) for your current address. This should match the PIN code on your address proof.`;
+
+  const mkInst = (label, val, emptyInst) => isFilled(val)
+    ? `${label} was auto-filled as "${val}" from your submitted documents. Verify this matches your address proof. Update if incorrect.`
+    : emptyInst;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">6</span> Address Details</div>
+      <div class="fields-grid">
+
+        ${fieldWrapper({
+          id: "care-of", label: "C/O (Care Of)", value: ad.care_of, spanTwo: true,
+          placeholder: "Father's / Mother's / Spouse's / Guardian's name",
+          instruction: mkInst("C/O", ad.care_of, "Enter the name of your father, mother, spouse, or guardian — for example: S/O Ramesh Kumar or W/O Priya Sharma. This is required for address verification and must match your address proof document.")
+        })}
+
+        ${fieldWrapper({
+          id: "house-no", label: "House No. / Bldg / Apt", value: ad.house_no_building,
+          placeholder: "e.g. 12B, Flat 3, Wing A",
+          instruction: mkInst("House No.", ad.house_no_building, "Enter your house number, flat number, building name, or apartment identifier exactly as it appears in your address proof document.")
+        })}
+
+        ${fieldWrapper({
+          id: "street", label: "Street / Road / Lane", value: ad.street_road_lane,
+          placeholder: "Street or road name",
+          instruction: mkInst("Street", ad.street_road_lane, "Enter the name of your street, road, or lane as written in your address proof.")
+        })}
+
+        ${fieldWrapper({
+          id: "landmark", label: "Landmark", value: ad.landmark,
+          placeholder: "Nearby landmark",
+          instruction: mkInst("Landmark", ad.landmark, "Enter a well-known reference point near your address — like a temple, school, or park.")
+        })}
+
+        ${fieldWrapper({
+          id: "area", label: "Area / Locality / Sector", value: ad.area_locality_sector,
+          placeholder: "e.g. Koregaon Park, Sector 14",
+          instruction: mkInst("Area / Locality", ad.area_locality_sector, "Enter the name of your local area, colony, locality, or sector. This is the sub-division of your city or town used for postal identification.")
+        })}
+
+        ${fieldWrapper({
+          id: "city", label: "Village / Town / City", value: ad.village_town_city,
+          placeholder: "City or town name",
+          instruction: mkInst("City", ad.village_town_city, "Enter the name of the city, town, or village where you currently reside, exactly as it appears on your address proof.")
+        })}
+
+        ${fieldWrapper({
+          id: "post-office", label: "Post Office", value: ad.post_office,
+          placeholder: "Name of your local post office",
+          instruction: mkInst("Post Office", ad.post_office, "Enter the name of the post office that serves your address area. This is usually listed on official postal envelopes delivered to your home.")
+        })}
+
+        ${fieldWrapper({
+          id: "district", label: "District", value: ad.district,
+          placeholder: "e.g. Pune, Thane, Mumbai Suburban",
+          instruction: mkInst("District", ad.district, "Enter your district name as it appears on official government documents or your address proof. For example, \"Pune\" or \"Mumbai Suburban\".")
+        })}
+
+        <!-- State (select) -->
+        <div class="field-wrapper ${stateFilled ? 'is-filled' : 'is-empty'}" id="wrapper-state">
+          <div class="field-label-row">
+            <span class="field-label">State</span>
+            ${stateFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+            ${audioBtn()}
+          </div>
+          <select class="form-select" id="field-state">
+            <option value="">-- Select State --</option>
+            ${STATES.map(s => `<option ${stateFilled && ad.state === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <div class="field-instruction"><div class="instruction-inner">
+            <span class="inst-icon">${stateFilled ? '✅' : '📌'}</span>
+            <span class="inst-text">${stateInst}</span>
+          </div></div>
+        </div>
+
+        ${fieldWrapper({
+          id: "pincode", label: "PIN Code", value: ad.pincode,
+          placeholder: "6-digit PIN code", extraAttrs: 'maxlength="6" inputmode="numeric"',
+          instruction: pinInst
+        })}
+
+      </div>
+    </div>`;
+}
+
+function renderSection8() {
+  const docs = fd.documents_submitted;
+  const anyFilled = isFilled(docs.proof_of_identity) || isFilled(docs.proof_of_address) || isFilled(docs.proof_of_dob);
+
+  const docInst = anyFilled
+    ? `Document fields have been auto-filled from your submission. Verify each: POI (Proof of Identity) as "${docs.proof_of_identity}", POA (Proof of Address) as "${docs.proof_of_address}", and DOB (Proof of Date of Birth) as "${docs.proof_of_dob}". Update any field if a different document was submitted for that purpose.`
+    : `Enter the name of the document submitted for each verification type: Identity, Address, and Date of Birth. Refer to the list of acceptable documents provided overleaf.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">8</span> Document-Based Verification</div>
+      <div class="field-wrapper ${anyFilled ? 'is-filled' : 'is-empty'}" id="wrapper-docs">
+        <div class="field-label-row">
+          <span class="field-label">Submitted Documents</span>
+          ${anyFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+          ${audioBtn()}
+        </div>
+        <div class="doc-rows">
+          <div class="doc-row">
+            <span class="doc-row-label">a.</span>
+            <span class="doc-row-sub">POI — Proof of Identity</span>
+            <input class="doc-input" id="field-poi" type="text" ${isFilled(docs.proof_of_identity) ? `value="${escHtml(docs.proof_of_identity)}"` : ''} placeholder="Document name" />
+          </div>
+          <div class="doc-row">
+            <span class="doc-row-label">b.</span>
+            <span class="doc-row-sub">POA — Proof of Address</span>
+            <input class="doc-input" id="field-poa" type="text" ${isFilled(docs.proof_of_address) ? `value="${escHtml(docs.proof_of_address)}"` : ''} placeholder="Document name" />
+          </div>
+          <div class="doc-row">
+            <span class="doc-row-label">c.</span>
+            <span class="doc-row-sub">DOB — Proof of Date of Birth</span>
+            <input class="doc-input" id="field-pod" type="text" ${isFilled(docs.proof_of_dob) ? `value="${escHtml(docs.proof_of_dob)}"` : ''} placeholder="Document name" />
+          </div>
+        </div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">${anyFilled ? '✅' : '📌'}</span>
+          <span class="inst-text">${docInst}</span>
+        </div></div>
+      </div>
+    </div>`;
+}
+
+function renderSignature() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title">Signature / Thumb Impression</div>
+      <div class="signature-area">
+        <div class="sig-box"><span>Applicant's Signature</span><small>or Left Thumb Impression</small></div>
+        <div class="sig-box"><span>Introducer's Signature</span><small>if applicable</small></div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER ALL
+   ═══════════════════════════════════════════════════════════════ */
+function renderForm() {
+  const body = document.getElementById('formBody');
+  body.innerHTML =
+    renderSection1() +
+    renderSection2() +
+    renderSection3() +
+    renderSection6() +
+    renderSection8() +
+    renderSignature();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FORM ASSISTANT  — toggleSpeak for start/stop on same button
+   ═══════════════════════════════════════════════════════════════ */
+class FormAssistant {
+  static toggleSpeak(btn) {
+    if (!window.speechSynthesis) { FormAssistant.toast('Speech synthesis not supported.'); return; }
+    const isSpeaking = btn.classList.contains('speaking');
+    // Stop everything
+    window.speechSynthesis.cancel();
+    document.querySelectorAll('.audio-btn.speaking').forEach(b => b.classList.remove('speaking'));
+    // If was already speaking, we've now stopped — done.
+    if (isSpeaking) return;
+    // Otherwise start speaking
+    const instEl = btn.closest('.field-wrapper')?.querySelector('.inst-text');
+    if (!instEl) return;
+    const text = instEl.textContent.trim();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'en-IN'; utt.rate = 0.92; utt.pitch = 1.0;
+    btn.classList.add('speaking');
+    utt.onend  = () => btn.classList.remove('speaking');
+    utt.onerror = () => btn.classList.remove('speaking');
+    window.speechSynthesis.speak(utt);
+  }
+
+  static toast(msg, duration = 3600) {
+    const c = document.getElementById('toastContainer');
+    if (!c) return;
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg; c.appendChild(t);
+    setTimeout(() => { t.style.cssText += 'opacity:0;transition:opacity .3s'; setTimeout(() => t.remove(), 320); }, duration);
+  }
+}
+window.FormAssistant = FormAssistant;
+
+/* ═══════════════════════════════════════════════════════════════
+   UID auto-format
+   ═══════════════════════════════════════════════════════════════ */
+function setupUIDInput() {
+  const uid = document.getElementById('field-aadhaar-number');
+  if (!uid) return;
+  uid.addEventListener('input', function() {
+    const raw = this.value.replace(/\D/g, '').slice(0, 12);
+    this.value = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FIELD INTERACTIONS
+   ═══════════════════════════════════════════════════════════════ */
+function setupFieldInteractions() {
+  const wrappers = document.querySelectorAll('.field-wrapper');
+  wrappers.forEach(wrapper => {
+    wrapper.addEventListener('click', (e) => {
+      const alreadyActive = wrapper.classList.contains('is-active');
+      wrappers.forEach(w => w.classList.remove('is-active'));
+      const clickedInput = e.target.closest('input, select, textarea, button');
+      if (!alreadyActive || clickedInput) wrapper.classList.add('is-active');
+    });
+    wrapper.querySelectorAll('input, select, textarea').forEach(inp => {
+      inp.addEventListener('focus', () => {
+        wrappers.forEach(w => w.classList.remove('is-active'));
+        wrapper.classList.add('is-active');
+      });
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.field-wrapper')) wrappers.forEach(w => w.classList.remove('is-active'));
+  });
+
+  // Update checkbox toggle
+  document.querySelectorAll('.update-checkbox input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', function() {
+      this.closest('.update-checkbox').classList.toggle('checked', this.checked);
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS
+   ═══════════════════════════════════════════════════════════════ */
+function updateProgress() {
+  const inputs = document.querySelectorAll('.form-input, .form-select, .uid-full-input, .doc-input');
+  let total = 0, filled = 0;
+  inputs.forEach(inp => {
+    const w = inp.closest('.field-wrapper');
+    if (w && w.dataset.optional === 'true') return;
+    total++;
+    if (inp.value && inp.value.trim()) filled++;
+  });
+  const pct = total ? Math.round((filled / total) * 100) : 0;
+  const fill = document.getElementById('progressFill');
+  const pctEl = document.getElementById('progressPct');
+  if (fill) fill.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════════════════════ */
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset all manually entered fields? Auto-filled values will be preserved.')) return;
+  document.querySelectorAll('.field-wrapper.is-empty .form-input, .field-wrapper.is-empty .form-select, .field-wrapper.is-empty .uid-full-input, .field-wrapper.is-empty .doc-input').forEach(i => { i.value = ''; });
+  updateProgress();
+  FormAssistant.toast('Empty fields have been reset.');
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  renderForm();
+  setupUIDInput();
+  setupFieldInteractions();
+  updateProgress();
+  document.addEventListener('input',  updateProgress);
+  document.addEventListener('change', updateProgress);
+});
+</script>
+
+</body>
+</html>

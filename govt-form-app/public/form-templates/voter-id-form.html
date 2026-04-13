@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<!--
+  ELECTION COMMISSION OF INDIA — FORM-6
+  Application Form for New Voters
+  See Rules 13(1) and 26 of the Registration of Electors Rules, 1960
+
+  JSON-driven: all field values and states derived from FORM_DATA.
+  Extends form-base.css structure identical to Aadhaar form.
+  Audio buttons toggle speak/stop on repeated click.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Form-6 — Application for New Voters | Election Commission of India</title>
+  <link rel="stylesheet" href="form-base.css" />
+  <style>
+    /* ── Extra layout helpers ─────────────────────────────────── */
+    .section-row-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 11px;
+    }
+    .section-row-3col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 11px;
+    }
+    @media (max-width: 640px) {
+      .section-row-2col,
+      .section-row-3col { grid-template-columns: 1fr; }
+    }
+
+    /* ── Constituency box (top "To:" section) ─────────────────── */
+    .constituency-notice {
+      background: #F7F9FC;
+      border-left: 4px solid #1A3A5C;
+      margin: 0 28px 0;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #0F1B2D;
+      line-height: 1.6;
+    }
+    .constituency-notice strong { color: #1A3A5C; }
+
+    /* ── Form number bar (top-right meta) ─────────────────────── */
+    .form-meta-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 20px;
+      padding: 8px 28px;
+      background: #fff;
+      border-bottom: 1px solid #D0D8E4;
+      font-size: 12px;
+      color: #4A5568;
+    }
+    .form-meta-bar span { font-weight: 600; color: #0F1B2D; }
+
+    /* ── DOB proof checkbox grid ──────────────────────────────── */
+    .dob-proof-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+      margin-top: 6px;
+    }
+    .dob-proof-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #0F1B2D;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1.5px solid transparent;
+      background: #F7F9FC;
+      cursor: pointer;
+      transition: border-color 140ms, background 140ms;
+    }
+    .dob-proof-item input[type="checkbox"] { accent-color: #27AE60; width: 15px; height: 15px; cursor: pointer; }
+    .dob-proof-item.checked { border-color: #27AE60; background: #F0FBF4; }
+    .dob-proof-item label { cursor: pointer; }
+
+    /* ── Relation type radio pill row ─────────────────────────── */
+    .relation-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .relation-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid #D0D8E4;
+      background: #F7F9FC;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 140ms, background 140ms;
+    }
+    .relation-item input[type="radio"] { accent-color: #27AE60; cursor: pointer; }
+    .relation-item.checked { border-color: #27AE60; background: #F0FBF4; color: #1E8449; font-weight: 600; }
+
+    /* ── Aadhaar field special ────────────────────────────────── */
+    .uid-input-wrapper { position: relative; }
+    .uid-full-input {
+      width: 100%;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 17px;
+      letter-spacing: 0.12em;
+      padding: 10px 12px;
+      border: 1.5px solid #D0D8E4;
+      border-radius: 6px;
+      outline: none;
+      background: #fff;
+      transition: border-color 140ms;
+    }
+    .uid-full-input:focus { border-color: #2563A8; }
+    .uid-format-hint {
+      position: absolute;
+      right: 10px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: #8898AA;
+      pointer-events: none;
+    }
+
+    /* ── Signature row ────────────────────────────────────────── */
+    .signature-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .sig-box {
+      border: 1.5px dashed #B0BEC5;
+      border-radius: 8px;
+      height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #8898AA;
+      font-size: 13px;
+      gap: 4px;
+    }
+    .sig-box small { font-size: 11px; opacity: .7; }
+
+    /* ── ECI notice bar ───────────────────────────────────────── */
+    .eci-notice {
+      background: #EBF2FB;
+      border-left: 4px solid #2563A8;
+      margin: 0 28px 0;
+      padding: 12px 18px;
+      font-size: 12.5px;
+      color: #1A3A5C;
+      line-height: 1.6;
+    }
+
+    /* ── Address grid 2-col ───────────────────────────────────── */
+    .addr-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 11px;
+    }
+    @media (max-width: 640px) { .addr-grid { grid-template-columns: 1fr; } }
+
+    /* ── Print overrides ──────────────────────────────────────── */
+    @media print {
+      /* Hide all UI chrome */
+      .form-progress-bar, .form-legend, .form-footer,
+      .field-instruction, .audio-btn, .toast-container,
+      .eci-notice, .form-meta-bar { display: none !important; }
+
+      /* Layout */
+      .form-card { box-shadow: none !important; border-radius: 0 !important; }
+      .form-page-wrapper { padding: 0 !important; max-width: 100% !important; }
+      body { background: #fff !important; }
+
+      /* Header — keep navy strip but no gradient tricks */
+      .form-header { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .form-title-bar { background: #C0392B !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      /* Strip ALL colour from field wrappers */
+      .field-wrapper,
+      .field-wrapper.is-filled,
+      .field-wrapper.is-empty,
+      .field-wrapper.is-active {
+        background: #fff !important;
+        border-color: #ccc !important;
+      }
+
+      /* Strip badges */
+      .field-badge,
+      .badge-filled,
+      .badge-empty,
+      .badge-optional {
+        background: none !important;
+        color: #000 !important;
+        border: 1px solid #ccc !important;
+      }
+
+      /* Inputs — plain borders, no coloured outlines */
+      .form-input, .form-select, .uid-full-input, .doc-input {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+      }
+
+      /* Field labels */
+      .field-label { color: #000 !important; }
+      .form-section-title { color: #000 !important; border-color: #ccc !important; }
+      .field-num { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      /* DOB proof checkboxes — strip green highlight */
+      .dob-proof-item,
+      .dob-proof-item.checked {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+      }
+
+      /* Relation / gender radio pills — strip green highlight */
+      .relation-item,
+      .relation-item.checked {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+        font-weight: 400 !important;
+      }
+
+      /* Signature boxes */
+      .sig-box { border-color: #ccc !important; color: #000 !important; }
+
+      /* Notice blocks */
+      .aadhaar-notice, .constituency-notice {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+      }
+
+      /* Declaration block */
+      .declaration-block {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+      }
+
+      /* Legend dots — not shown but just in case */
+      .legend-dot { display: none !important; }
+
+      /* No Aadhaar notice strip */
+      #noAadhaarNotice { background: #fff !important; border-color: #ccc !important; color: #000 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="form-page-wrapper">
+  <div class="form-card">
+
+    <!-- ══ Header ══════════════════════════════════════════════ -->
+    <div class="form-header">
+      <div style="width:56px; display:flex; align-items:center; justify-content:center;">
+        <!-- ECI emblem placeholder -->
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <circle cx="26" cy="26" r="25" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+          <circle cx="26" cy="26" r="18" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+          <text x="26" y="31" text-anchor="middle" font-size="18" fill="white">🗳️</text>
+        </svg>
+      </div>
+      <div class="header-title-block">
+        <div class="gov-label">Election Commission of India · Government of India</div>
+        <div class="form-title">Form-6 — Application for New Voters</div>
+        <div class="form-subtitle">See Rules 13(1) and (26) of the Registration of Electors Rules, 1960</div>
+      </div>
+      <div style="width:56px; display:flex; align-items:center; justify-content:center;">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <rect width="52" height="52" rx="9" fill="rgba(255,255,255,0.12)"/>
+          <text x="26" y="35" text-anchor="middle" font-size="26" fill="white">🪪</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ══ Red Title Bar ════════════════════════════════════════ -->
+    <div class="form-title-bar">Application Form for New Voters — Form 6</div>
+
+    <!-- ══ Form No. meta bar ═══════════════════════════════════ -->
+    <div class="form-meta-bar">
+      <div>FORM No. <span id="formNoDisplay">_______________________</span></div>
+      <div style="font-style:italic; font-weight:400;">(To be filled by office)</div>
+    </div>
+
+    <!-- ══ ECI Notice ════════════════════════════════════════════ -->
+    <div class="eci-notice" style="margin-top:16px; margin-bottom:0;">
+      <strong>To:</strong> The Electoral Registration Officer,<br>
+      I hereby submit this application for inclusion of my name in the Electoral Roll for the above constituency under Section 23 of the Representation of the People Act, 1950.
+      Please fill all fields in <strong>BLOCK / CAPITAL LETTERS</strong> only.
+    </div>
+
+    <!-- ══ Progress Bar ═════════════════════════════════════════ -->
+    <div class="form-progress-bar" style="margin-top:16px;">
+      <span class="progress-label">Completion</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+
+    <!-- ══ Legend ════════════════════════════════════════════════ -->
+    <div class="form-legend">
+      <div class="legend-item"><span class="legend-dot filled"></span> Auto-filled from your documents</div>
+      <div class="legend-item"><span class="legend-dot empty"></span> Requires your input</div>
+      <span class="legend-tip">Click any field to see instructions · 🔊 for voice</span>
+    </div>
+
+    <!-- ══ Form Body ══════════════════════════════════════════════ -->
+    <div class="form-body" id="formBody">
+      <!-- Rendered by JS from FORM_DATA -->
+    </div>
+
+    <!-- ══ Footer ════════════════════════════════════════════════ -->
+    <div class="form-footer">
+      <button class="btn btn-ghost" id="resetBtn">↺ Reset</button>
+      <button class="btn btn-danger" onclick="window.print()">🖨 Print Form</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   FORM DATA  — In production, replace with API response.
+   Values that are "$" mean "user must fill"; anything else is auto-filled.
+   ═══════════════════════════════════════════════════════════════ */
+const FORM_DATA = {
+  "filled_form": {
+    "aadhaar_number": "123456789012",
+    "address_details": {
+      "district": "$",
+      "house_building_apartment_no": "123TestStreet NearDemoPark",
+      "pin_code": "411001",
+      "post_office": "$",
+      "state_ut": "Maharashtra",
+      "tehsil_taluka_mandal": "$",
+      "town_village": "$"
+    },
+    "applicant_name": {
+      "first_name_middle_name": "John Doe",
+      "surname": "$"
+    },
+    "email_id": "$",
+    "form_title": "Election Commission of India - Form-6",
+    "mobile_no": "$",
+    "personal_details": {
+      "date_of_birth": "15/06/1995",
+      "gender": {
+        "female": "$",
+        "male": "yes",
+        "third_gender": "$"
+      },
+      "proof_of_dob": {
+        "aadhaar_card": "yes",
+        "birth_certificate": "$",
+        "class_10_12_certificate": "$",
+        "driving_license": "yes",
+        "indian_passport": "yes",
+        "other_document": "$",
+        "pan_card": "yes"
+      }
+    },
+    "relative_details": {
+      "relation_type": {
+        "father": "$",
+        "husband": "$",
+        "legal_guardian": "$",
+        "mother": "$",
+        "wife": "$"
+      },
+      "relative_name": "$"
+    }
+  },
+  "status": "success"
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+const fd = FORM_DATA.filled_form;
+
+function isFilled(val) { return val && val !== "$"; }
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function audioBtn() {
+  return `<button class="audio-btn" onclick="event.stopPropagation(); FormAssistant.toggleSpeak(this)" title="Read / stop instruction">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+  </button>`;
+}
+
+function fieldWrapper({ id, label, type = "text", value, placeholder, instruction, optional = false, spanTwo = false, extraAttrs = "" }) {
+  const filled    = isFilled(value);
+  const stateClass = filled ? "is-filled" : "is-empty";
+  const badge = filled
+    ? `<span class="field-badge badge-filled">Auto-filled</span>`
+    : optional
+      ? `<span class="field-badge badge-optional">Optional</span>`
+      : `<span class="field-badge badge-empty">Required</span>`;
+  const icon    = filled ? "✅" : "📌";
+  const val     = filled ? `value="${escHtml(value)}"` : "";
+  const spanCls = spanTwo ? " span-2" : "";
+  const optAttr = optional ? ' data-optional="true"' : "";
+
+  return `
+    <div class="field-wrapper ${stateClass}${spanCls}" id="wrapper-${id}"${optAttr}>
+      <div class="field-label-row">
+        <span class="field-label">${label}</span>
+        ${badge}
+        ${audioBtn()}
+      </div>
+      <input class="form-input" id="field-${id}" type="${type}" ${val} placeholder="${placeholder}" ${extraAttrs} />
+      <div class="field-instruction">
+        <div class="instruction-inner">
+          <span class="inst-icon">${icon}</span>
+          <span class="inst-text">${instruction}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 1(a) & 1(b) — Applicant Name
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection1() {
+  const name = fd.applicant_name;
+  const fnFilled  = isFilled(name.first_name_middle_name);
+  const surFilled = isFilled(name.surname);
+
+  const fnInst = fnFilled
+    ? `Your first and middle name was auto-filled as "${name.first_name_middle_name}" from your documents. Verify each letter is correct and written in BLOCK LETTERS.`
+    : `Enter your first name followed by middle name (if any) in BLOCK LETTERS, exactly as it appears on your official identity document.`;
+
+  const surInst = surFilled
+    ? `Your surname was auto-filled as "${name.surname}". Verify it matches your official documents.`
+    : `Enter your surname / family name in BLOCK LETTERS. Leave blank if you do not have a surname.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">1(a)</span> Name in Official Language of State &amp; <span class="field-num">1(b)</span> Name in English (BLOCK LETTERS)</div>
+      <div class="section-row-2col">
+        ${fieldWrapper({
+          id: "first-name", label: "First Name followed by Middle Name",
+          value: name.first_name_middle_name,
+          placeholder: "e.g. JOHN WILLIAM",
+          instruction: fnInst
+        })}
+        ${fieldWrapper({
+          id: "surname", label: "Surname (if any)",
+          value: name.surname,
+          placeholder: "e.g. DOE",
+          instruction: surInst,
+          optional: true
+        })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 2 — Relative Details
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection2() {
+  const rel = fd.relative_details;
+  const relName = rel.relative_name;
+  const relFilled = isFilled(relName);
+
+  const RELATIONS = [
+    { key: "father",         label: "Father"         },
+    { key: "mother",         label: "Mother"         },
+    { key: "husband",        label: "Husband"        },
+    { key: "wife",           label: "Wife"           },
+    { key: "legal_guardian", label: "Legal Guardian / Guru (Third Gender)" },
+  ];
+
+  const selectedRelation = RELATIONS.find(r => isFilled(rel.relation_type[r.key]));
+  const anyRelFilled = !!selectedRelation;
+
+  const relTypeInst = anyRelFilled
+    ? `The relation type "${selectedRelation.label}" was auto-detected from your documents. Select the correct relation from the options.`
+    : `Select one relation type — Father, Mother, Husband, Wife, or Legal Guardian. This is the relative whose name you are providing as a reference for your electoral registration.`;
+
+  const relNameInst = relFilled
+    ? `Relative's name was auto-filled as "${relName}". Verify it matches your official documents. Write in BLOCK LETTERS.`
+    : `Enter the full name of your relative (Father / Mother / Husband / Wife / Legal Guardian) as it appears on official documents. Use BLOCK LETTERS only.`;
+
+  const relationItems = RELATIONS.map(r => {
+    const isChecked = isFilled(rel.relation_type[r.key]);
+    return `<label class="relation-item${isChecked ? ' checked' : ''}">
+      <input type="radio" name="relation_type" value="${r.key}" ${isChecked ? 'checked' : ''} />
+      ${r.label}
+    </label>`;
+  }).join('');
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">2</span> Name &amp; Surname of Relative (Father / Mother / Husband / Wife / Legal Guardian)</div>
+
+      <!-- Relation type -->
+      <div class="field-wrapper ${anyRelFilled ? 'is-filled' : 'is-empty'}" id="wrapper-relation-type" style="margin-bottom:12px;">
+        <div class="field-label-row">
+          <span class="field-label">Relation Type</span>
+          ${anyRelFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+          ${audioBtn()}
+        </div>
+        <div class="relation-grid">${relationItems}</div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">${anyRelFilled ? '✅' : '📌'}</span>
+          <span class="inst-text">${relTypeInst}</span>
+        </div></div>
+      </div>
+
+      <!-- Relative name -->
+      ${fieldWrapper({
+        id: "relative-name", label: "Name and Surname of Relative (in BLOCK LETTERS)",
+        value: relName,
+        placeholder: "e.g. RAMESH KUMAR DOE",
+        instruction: relNameInst,
+        spanTwo: true
+      })}
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 3 — Contact Details
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection3() {
+  const mobFilled   = isFilled(fd.mobile_no);
+  const emailFilled = isFilled(fd.email_id);
+
+  const mobInst = mobFilled
+    ? `Mobile number was auto-filled as "${fd.mobile_no}" from your documents. Verify it is your active 10-digit number.`
+    : `Enter a valid 10-digit Indian mobile number (without country code) you can be reached at regarding your voter registration application.`;
+
+  const emailInst = emailFilled
+    ? `Email was auto-filled as "${fd.email_id}". Verify it is correct and you have regular access to it.`
+    : `(Optional) Enter your email address to receive digital updates and notifications about your voter registration status.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">3</span> Contact Details</div>
+      <div class="section-row-2col">
+        ${fieldWrapper({
+          id: "mobile", label: "Mobile No. of Self (if available)",
+          type: "tel", value: fd.mobile_no,
+          placeholder: "10-digit mobile number",
+          instruction: mobInst,
+          extraAttrs: 'maxlength="10" inputmode="numeric"'
+        })}
+        ${fieldWrapper({
+          id: "email", label: "Email ID of Self (if available)",
+          type: "email", value: fd.email_id,
+          placeholder: "yourname@email.com",
+          instruction: emailInst,
+          optional: true
+        })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 4 — Aadhaar Details
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection4() {
+  const uid = fd.aadhaar_number;
+  const uidFilled = isFilled(uid);
+
+  const uidInst = uidFilled
+    ? `Your Aadhaar number was auto-filled as ${uid} from your submitted documents. Verify each digit carefully. Providing Aadhaar is voluntary but helps expedite the process.`
+    : `Enter your 12-digit Aadhaar number exactly as printed on your Aadhaar card. This is voluntary — tick the checkbox below if you do not have an Aadhaar number.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">4</span> Aadhaar Details <small style="font-weight:400;font-size:12px;">(Please tick the appropriate box)</small></div>
+
+      <div class="field-wrapper ${uidFilled ? 'is-filled' : 'is-empty'}" id="wrapper-aadhaar-number">
+        <div class="field-label-row">
+          <span class="field-label">(a) Aadhaar Number</span>
+          ${uidFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required / Voluntary</span>'}
+          ${audioBtn()}
+        </div>
+        <div class="uid-input-wrapper">
+          <input class="uid-full-input" id="field-aadhaar-number" type="text"
+            inputmode="numeric" maxlength="14"
+            ${uidFilled ? `value="${escHtml(uid)}"` : ''}
+            placeholder="XXXX XXXX XXXX" />
+          <span class="uid-format-hint">12 digits</span>
+        </div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">${uidFilled ? '✅' : '📌'}</span>
+          <span class="inst-text">${uidInst}</span>
+        </div></div>
+      </div>
+
+      <div style="margin-top:10px; padding:10px 14px; background:#FFFDF5; border:1.5px solid #E6B800; border-radius:6px; font-size:13px; color:#7D6608; display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="noAadhaar" style="width:15px;height:15px;accent-color:#E6B800;cursor:pointer;" />
+        <label for="noAadhaar" style="cursor:pointer;">(b) I am not able to furnish my Aadhaar Number because I do not have an Aadhaar Number.</label>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5 — Gender
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection5() {
+  const g = fd.personal_details.gender;
+  const genderMap = { male: "Male", female: "Female", third_gender: "Third Gender" };
+  const selectedGender = Object.keys(genderMap).find(k => isFilled(g[k]));
+  const genderFilled = !!selectedGender;
+
+  const genderInst = genderFilled
+    ? `Gender was auto-detected as "${genderMap[selectedGender]}" from your documents. Select the correct option if this needs to be changed.`
+    : `Select your gender — Male, Female, or Third Gender — as you wish it to appear in the Electoral Roll.`;
+
+  const genderItems = Object.entries(genderMap).map(([k, label]) => {
+    const isChecked = isFilled(g[k]);
+    return `<label class="relation-item${isChecked ? ' checked' : ''}">
+      <input type="radio" name="gender" value="${k}" ${isChecked ? 'checked' : ''} />
+      ${label}
+    </label>`;
+  }).join('');
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">5</span> Gender</div>
+      <div class="field-wrapper ${genderFilled ? 'is-filled' : 'is-empty'}" id="wrapper-gender">
+        <div class="field-label-row">
+          <span class="field-label">Select Gender</span>
+          ${genderFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+          ${audioBtn()}
+        </div>
+        <div class="relation-grid">${genderItems}</div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">${genderFilled ? '✅' : '📌'}</span>
+          <span class="inst-text">${genderInst}</span>
+        </div></div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 6 — Date of Birth
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection6() {
+  const dob = fd.personal_details.date_of_birth;
+  const dobFilled = isFilled(dob);
+
+  const dobInst = dobFilled
+    ? `Date of Birth was auto-filled as "${dob}" from your documents. Verify the day, month and year are correct. You must be at least 18 years of age as of the qualifying date (1st January of the year of revision) to be eligible.`
+    : `Enter your Date of Birth in DD/MM/YYYY format. You must be 18 years or older as on 1st January of the revision year.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">6</span> Date of Birth</div>
+      ${fieldWrapper({
+        id: "dob", label: "Date of Birth (DD/MM/YYYY)",
+        value: dob, placeholder: "DD/MM/YYYY",
+        instruction: dobInst,
+        extraAttrs: 'maxlength="10" inputmode="numeric"'
+      })}
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 7 — Proof of Date of Birth
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection7() {
+  const pod = fd.personal_details.proof_of_dob;
+
+  const DOB_DOCS = [
+    { key: "birth_certificate",      label: "a. Birth Certificate (Competent Local Body / Municipal Authority / Registrar of Births & Deaths)" },
+    { key: "aadhaar_card",           label: "b. Aadhaar Card" },
+    { key: "pan_card",               label: "c. PAN Card" },
+    { key: "driving_license",        label: "d. Driving License" },
+    { key: "class_10_12_certificate",label: "e. Certificate of Class X / XII (CBSE / ISC / State Board)" },
+    { key: "indian_passport",        label: "f. Indian Passport" },
+    { key: "other_document",         label: "g. Any Other Document (if none of the above is available)" },
+  ];
+
+  const selectedDocs = DOB_DOCS.filter(d => isFilled(pod[d.key])).map(d => d.label.split('. ')[1]);
+  const anyFilled = selectedDocs.length > 0;
+
+  const inst = anyFilled
+    ? `Based on your documents, the following proofs of Date of Birth were detected: ${selectedDocs.join("; ")}. Tick all documents you are submitting. Any one of these is sufficient.`
+    : `Tick ✓ any one (or more) document you are submitting as Proof of Date of Birth. At least one is mandatory.`;
+
+  const docItems = DOB_DOCS.map(d => {
+    const checked = isFilled(pod[d.key]);
+    return `<label class="dob-proof-item${checked ? ' checked' : ''}">
+      <input type="checkbox" data-dob-key="${d.key}" ${checked ? 'checked' : ''} />
+      <label style="pointer-events:none;">${d.label}</label>
+    </label>`;
+  }).join('');
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">7</span> Any Document for Proof of Date of Birth <small style="font-weight:400;font-size:12px;">(✓ Anyone of these)</small></div>
+      <div class="field-wrapper ${anyFilled ? 'is-filled' : 'is-empty'}" id="wrapper-dob-proof">
+        <div class="field-label-row">
+          <span class="field-label">Proof of DOB Documents</span>
+          ${anyFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+          ${audioBtn()}
+        </div>
+        <div class="dob-proof-grid">${docItems}</div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">${anyFilled ? '✅' : '📌'}</span>
+          <span class="inst-text">${inst}</span>
+        </div></div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 8 — Full Address
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection8() {
+  const ad = fd.address_details;
+  const STATES = ["Andaman &amp; Nicobar Islands","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh (UT)","Chhattisgarh","Dadra &amp; Nagar Haveli and Daman &amp; Diu","Delhi (NCT)","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu &amp; Kashmir (UT)","Jharkhand","Karnataka","Kerala","Ladakh (UT)","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Puducherry (UT)","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
+
+  const stateFilled = isFilled(ad.state_ut);
+  const stateInst = stateFilled
+    ? `State/UT was auto-filled as "${ad.state_ut}" from your documents. Verify this is the state of your current residential address. Use the dropdown to change if incorrect.`
+    : `Select the State or Union Territory where you currently reside. This must match your address proof.`;
+
+  const mkInst = (label, val, emptyInst) => isFilled(val)
+    ? `${label} was auto-filled as "${val}" from your submitted documents. Verify it matches your address proof. Update if incorrect.`
+    : emptyInst;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">8</span> Full Address</div>
+      <div class="addr-grid">
+
+        ${fieldWrapper({
+          id: "house-apt", label: "House No. / Building / Apartment No.",
+          value: ad.house_building_apartment_no,
+          placeholder: "e.g. 12B, Flat 3, Wing A",
+          instruction: mkInst("House/Building/Apartment No.", ad.house_building_apartment_no, "Enter your house number, flat number, building name, or apartment identifier exactly as it appears on your address proof.")
+        })}
+
+        ${fieldWrapper({
+          id: "town-village", label: "Town / Village",
+          value: ad.town_village,
+          placeholder: "e.g. Koregaon Park",
+          instruction: mkInst("Town/Village", ad.town_village, "Enter the name of the town, village, or local area where you reside as it appears on your address proof.")
+        })}
+
+        ${fieldWrapper({
+          id: "post-office", label: "Post Office",
+          value: ad.post_office,
+          placeholder: "Name of your local post office",
+          instruction: mkInst("Post Office", ad.post_office, "Enter the name of the post office that serves your address area.")
+        })}
+
+        ${fieldWrapper({
+          id: "tehsil", label: "Tehsil / Taluka / Mandal",
+          value: ad.tehsil_taluka_mandal,
+          placeholder: "e.g. Haveli, Andheri",
+          instruction: mkInst("Tehsil/Taluka/Mandal", ad.tehsil_taluka_mandal, "Enter the Tehsil, Taluka or Mandal name for your area — this is the administrative sub-division of your district.")
+        })}
+
+        ${fieldWrapper({
+          id: "district", label: "District",
+          value: ad.district,
+          placeholder: "e.g. Pune, Mumbai Suburban",
+          instruction: mkInst("District", ad.district, "Enter your district name as it appears on official government documents or your address proof.")
+        })}
+
+        ${fieldWrapper({
+          id: "pin-code", label: "PIN Code",
+          value: ad.pin_code,
+          placeholder: "6-digit PIN code",
+          extraAttrs: 'maxlength="6" inputmode="numeric"',
+          instruction: mkInst("PIN Code", ad.pin_code, "Enter the 6-digit postal PIN code for your current address. It must match your address proof.")
+        })}
+
+        <!-- State (select) -->
+        <div class="field-wrapper ${stateFilled ? 'is-filled' : 'is-empty'}" id="wrapper-state-ut">
+          <div class="field-label-row">
+            <span class="field-label">State / UT</span>
+            ${stateFilled ? '<span class="field-badge badge-filled">Auto-filled</span>' : '<span class="field-badge badge-empty">Required</span>'}
+            ${audioBtn()}
+          </div>
+          <select class="form-select" id="field-state-ut">
+            <option value="">-- Select State / UT --</option>
+            ${STATES.map(s => `<option ${stateFilled && ad.state_ut === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <div class="field-instruction"><div class="instruction-inner">
+            <span class="inst-icon">${stateFilled ? '✅' : '📌'}</span>
+            <span class="inst-text">${stateInst}</span>
+          </div></div>
+        </div>
+
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 9 — Proof of Address
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection9() {
+  // These keys are not in the API response yet; treat all as empty
+  const POA_DOCS = [
+    { key: "aadhaar_card",        label: "a. Aadhaar Card" },
+    { key: "bank_passbook",       label: "b. Bank / Post Office Passbook with photograph" },
+    { key: "ration_card",         label: "c. Ration Card" },
+    { key: "driving_license",     label: "d. Driving License" },
+    { key: "indian_passport",     label: "e. Indian Passport" },
+    { key: "utility_bill",        label: "f. Utility Bill (Electricity / Water / Gas / Telephone — not older than 3 months)" },
+    { key: "income_tax_return",   label: "g. Latest Income Tax Return / Assessment Order" },
+    { key: "registered_deed",     label: "h. Registered Sale / Rent / Lease Deed" },
+    { key: "other_document",      label: "i. Any Other Document (if none of the above is available)" },
+  ];
+
+  const docItems = POA_DOCS.map(d => `
+    <label class="dob-proof-item">
+      <input type="checkbox" data-poa-key="${d.key}" />
+      <label style="pointer-events:none;">${d.label}</label>
+    </label>`).join('');
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">9</span> Any Document for Proof of Address <small style="font-weight:400;font-size:12px;">(✓ Anyone of these)</small></div>
+      <div class="field-wrapper is-empty" id="wrapper-poa-proof">
+        <div class="field-label-row">
+          <span class="field-label">Proof of Address Documents</span>
+          <span class="field-badge badge-empty">Required</span>
+          ${audioBtn()}
+        </div>
+        <div class="dob-proof-grid">${docItems}</div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">📌</span>
+          <span class="inst-text">Tick ✓ any one document you are submitting as Proof of Address for your current residential address. The document must clearly show your name and full address.</span>
+        </div></div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 10 — Previous / Shifted Registration
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection10() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">10</span> Details of Previous / Shifted Registration <small style="font-weight:400;font-size:12px;">(if applicable)</small></div>
+
+      <div style="background:#FFFDF5; border:1.5px solid #E6B800; border-radius:7px; padding:10px 14px; font-size:12.5px; color:#7D6608; margin-bottom:12px;">
+        Fill this section <strong>only</strong> if you were previously registered as a voter in another constituency or at a different address.
+      </div>
+
+      <div class="section-row-2col">
+        ${fieldWrapper({
+          id: "prev-epic", label: "Previous EPIC / Voter ID Number (if any)",
+          value: "$",
+          placeholder: "e.g. MH/01/123/456789",
+          instruction: "Enter your old Voter ID (EPIC) number if you were registered in another constituency or at a previous address. Leave blank if this is your first registration.",
+          optional: true
+        })}
+        ${fieldWrapper({
+          id: "prev-part-no", label: "Part No. of Previous Electoral Roll",
+          value: "$",
+          placeholder: "Part number",
+          instruction: "Enter the part number of the electoral roll where your name was previously included. This is available on your previous Voter ID card or from your earlier ERO office.",
+          optional: true
+        })}
+        ${fieldWrapper({
+          id: "prev-sl-no", label: "Serial No. in Previous Electoral Roll",
+          value: "$",
+          placeholder: "Serial number",
+          instruction: "Enter the serial number of your entry in the previous electoral roll part. This is printed on your old voter ID or slip.",
+          optional: true
+        })}
+        ${fieldWrapper({
+          id: "prev-constituency", label: "Name of Previous Assembly Constituency",
+          value: "$",
+          placeholder: "e.g. Shivajinagar, Ward 12",
+          instruction: "Enter the name of the Assembly Constituency where you were last registered as a voter before shifting to the current address.",
+          optional: true
+        })}
+      </div>
+
+      <div style="margin-top:10px;">
+        ${fieldWrapper({
+          id: "prev-address", label: "Previous Address (if shifted from another address)",
+          value: "$",
+          placeholder: "Full previous residential address",
+          instruction: "Enter your complete previous residential address — house number, street, area, city, district, state and PIN code. This is required if you are shifting your voter registration from another address.",
+          optional: true,
+          spanTwo: true
+        })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 11 — Constituency Details (user-declared)
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection11() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">11</span> Constituency Details</div>
+      <div class="section-row-2col">
+        <div class="field-wrapper is-empty" id="wrapper-assembly-const">
+          <div class="field-label-row">
+            <span class="field-label">No. &amp; Name of Assembly Constituency</span>
+            <span class="field-badge badge-empty">Required</span>
+            ${audioBtn()}
+          </div>
+          <input class="form-input" id="field-assembly-const" type="text" placeholder="e.g. 152 - Shivajinagar" />
+          <div class="field-instruction"><div class="instruction-inner">
+            <span class="inst-icon">📌</span>
+            <span class="inst-text">Enter the number and name of the Assembly (Vidhan Sabha) Constituency in which your current address falls. You can find this at voters.eci.gov.in by searching your address.</span>
+          </div></div>
+        </div>
+        <div class="field-wrapper is-empty" id="wrapper-parl-const">
+          <div class="field-label-row">
+            <span class="field-label">No. &amp; Name of Parliamentary Constituency</span>
+            <span class="field-badge badge-empty">Required</span>
+            ${audioBtn()}
+          </div>
+          <input class="form-input" id="field-parl-const" type="text" placeholder="e.g. 21 - Pune" />
+          <div class="field-instruction"><div class="instruction-inner">
+            <span class="inst-icon">📌</span>
+            <span class="inst-text">Enter the number and name of the Parliamentary (Lok Sabha) Constituency corresponding to your Assembly Constituency. This is available at voters.eci.gov.in or on the official ECI constituency mapping list.</span>
+          </div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION — Declaration & Signature
+   ═══════════════════════════════════════════════════════════════ */
+function renderSignature() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title">Declaration &amp; Signature</div>
+      <div class="declaration-block" style="background:#F7F9FC; border:1.5px solid #D0D8E4; border-radius:8px; padding:14px 16px; font-size:12.5px; color:#4A5568; line-height:1.7; margin-bottom:14px;">
+        I hereby declare that I am a citizen of India, that the above particulars furnished by me are true and correct to the best of my knowledge and belief, and that I am entitled to be registered as an elector in the above constituency. I also declare that I have not applied for registration in any other constituency.
+      </div>
+      <div class="signature-area">
+        <div class="sig-box">
+          <span>Applicant's Signature</span>
+          <small>or Left Thumb Impression</small>
+        </div>
+        <div class="sig-box">
+          <span>Date of Signing</span>
+          <small>DD / MM / YYYY</small>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER ALL
+   ═══════════════════════════════════════════════════════════════ */
+function renderForm() {
+  const body = document.getElementById('formBody');
+  body.innerHTML =
+    renderSection1() +
+    renderSection2() +
+    renderSection3() +
+    renderSection4() +
+    renderSection5() +
+    renderSection6() +
+    renderSection7() +
+    renderSection8() +
+    renderSection9() +
+    renderSection10() +
+    renderSection11() +
+    renderSignature();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FORM ASSISTANT — toggleSpeak for start/stop on same button
+   ═══════════════════════════════════════════════════════════════ */
+class FormAssistant {
+  static toggleSpeak(btn) {
+    if (!window.speechSynthesis) { FormAssistant.toast('Speech synthesis not supported.'); return; }
+    const isSpeaking = btn.classList.contains('speaking');
+    window.speechSynthesis.cancel();
+    document.querySelectorAll('.audio-btn.speaking').forEach(b => b.classList.remove('speaking'));
+    if (isSpeaking) return;
+    const instEl = btn.closest('.field-wrapper')?.querySelector('.inst-text');
+    if (!instEl) return;
+    const text = instEl.textContent.trim();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'en-IN'; utt.rate = 0.92; utt.pitch = 1.0;
+    btn.classList.add('speaking');
+    utt.onend  = () => btn.classList.remove('speaking');
+    utt.onerror = () => btn.classList.remove('speaking');
+    window.speechSynthesis.speak(utt);
+  }
+
+  static toast(msg, duration = 3600) {
+    const c = document.getElementById('toastContainer');
+    if (!c) return;
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg; c.appendChild(t);
+    setTimeout(() => { t.style.cssText += 'opacity:0;transition:opacity .3s'; setTimeout(() => t.remove(), 320); }, duration);
+  }
+}
+window.FormAssistant = FormAssistant;
+
+/* ═══════════════════════════════════════════════════════════════
+   UID auto-format (Aadhaar field)
+   ═══════════════════════════════════════════════════════════════ */
+function setupUIDInput() {
+  const uid = document.getElementById('field-aadhaar-number');
+  if (!uid) return;
+  uid.addEventListener('input', function() {
+    const raw = this.value.replace(/\D/g, '').slice(0, 12);
+    this.value = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FIELD INTERACTIONS
+   ═══════════════════════════════════════════════════════════════ */
+function setupFieldInteractions() {
+  const wrappers = document.querySelectorAll('.field-wrapper');
+
+  wrappers.forEach(wrapper => {
+    wrapper.addEventListener('click', (e) => {
+      const alreadyActive = wrapper.classList.contains('is-active');
+      wrappers.forEach(w => w.classList.remove('is-active'));
+      const clickedInput = e.target.closest('input, select, textarea, button');
+      if (!alreadyActive || clickedInput) wrapper.classList.add('is-active');
+    });
+    wrapper.querySelectorAll('input, select, textarea').forEach(inp => {
+      inp.addEventListener('focus', () => {
+        wrappers.forEach(w => w.classList.remove('is-active'));
+        wrapper.classList.add('is-active');
+      });
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.field-wrapper')) wrappers.forEach(w => w.classList.remove('is-active'));
+  });
+
+  // DOB proof checkbox highlight
+  document.querySelectorAll('.dob-proof-item input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', function() {
+      this.closest('.dob-proof-item').classList.toggle('checked', this.checked);
+    });
+  });
+  document.querySelectorAll('.relation-item input[type="radio"]').forEach(rb => {
+    rb.addEventListener('change', function() {
+      document.querySelectorAll(`.relation-item`).forEach(el => el.classList.remove('checked'));
+      if (this.checked) this.closest('.relation-item').classList.add('checked');
+    });
+  });
+
+  // Gender radio highlight
+  document.querySelectorAll('input[name="gender"]').forEach(rb => {
+    rb.addEventListener('change', function() {
+      document.querySelectorAll('input[name="gender"]').forEach(r => r.closest('.relation-item').classList.remove('checked'));
+      if (this.checked) this.closest('.relation-item').classList.add('checked');
+    });
+  });
+
+  // No Aadhaar checkbox toggles aadhaar field
+  const noAadhaarCb = document.getElementById('noAadhaar');
+  const aadhaarWrapper = document.getElementById('wrapper-aadhaar-number');
+  if (noAadhaarCb && aadhaarWrapper) {
+    noAadhaarCb.addEventListener('change', function() {
+      const inp = document.getElementById('field-aadhaar-number');
+      if (this.checked) {
+        aadhaarWrapper.style.opacity = '0.4';
+        aadhaarWrapper.style.pointerEvents = 'none';
+        if (inp) inp.value = '';
+      } else {
+        aadhaarWrapper.style.opacity = '';
+        aadhaarWrapper.style.pointerEvents = '';
+      }
+      updateProgress();
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS
+   ═══════════════════════════════════════════════════════════════ */
+function updateProgress() {
+  const inputs = document.querySelectorAll('.form-input, .form-select, .uid-full-input');
+  let total = 0, filled = 0;
+  inputs.forEach(inp => {
+    const w = inp.closest('.field-wrapper');
+    if (w && w.dataset.optional === 'true') return;
+    if (w && w.style.pointerEvents === 'none') return; // disabled (no Aadhaar)
+    total++;
+    if (inp.value && inp.value.trim()) filled++;
+  });
+  const pct = total ? Math.round((filled / total) * 100) : 0;
+  const fill = document.getElementById('progressFill');
+  const pctEl = document.getElementById('progressPct');
+  if (fill) fill.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (!confirm('Reset all manually entered fields? Auto-filled values will be preserved.')) return;
+    document.querySelectorAll('.field-wrapper.is-empty .form-input, .field-wrapper.is-empty .form-select, .field-wrapper.is-empty .uid-full-input').forEach(i => { i.value = ''; });
+    updateProgress();
+    FormAssistant.toast('Empty fields have been reset.');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  renderForm();
+  setupUIDInput();
+  setupFieldInteractions();
+  updateProgress();
+  document.addEventListener('input',  updateProgress);
+  document.addEventListener('change', updateProgress);
+});
+</script>
+
+</body>
+</html>

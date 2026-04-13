@@ -9,15 +9,18 @@ import json
 from dotenv import load_dotenv
 from openai import OpenAI
 from utils.prompt_loader import load_prompt
-from utils.prompt_loader import build_form_filling_prompt
+from utils.prompt_loader import build_form_filling_prompt, build_combined_extraction_prompt
 
 import os
 from rapidocr_onnxruntime import RapidOCR
+from flask_cors import CORS
 
 # Load env
 load_dotenv()
 
 app = Flask(__name__)
+
+CORS(app) 
 
 ocr = RapidOCR()
 
@@ -218,6 +221,45 @@ def fill_form(extracted_data, form_type):
         }
 
 
+def call_model_combined(ocr_texts_by_type: dict):
+    prompt = build_combined_extraction_prompt(ocr_texts_by_type)
+
+    completion = client_ocr.chat.completions.create(
+        model="deepseek-ai/deepseek-v3.1-terminus",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.0,
+        top_p=0.7,
+        max_tokens=2048,
+        extra_body={"chat_template_kwargs": {"thinking": False}},
+        stream=True
+    )
+
+    output = ""
+    for chunk in completion:
+        if not getattr(chunk, "choices", None):
+            continue
+        delta = chunk.choices[0].delta
+        if delta and delta.content:
+            output += delta.content
+
+    output = output.strip().replace("```json", "").replace("```", "").strip()
+
+    try:
+        return json.loads(output)
+    except Exception as e:
+        print("\n--- RAW MODEL OUTPUT ---\n", output, "\n")
+        return {"error": "JSON parse failed", "raw_output": output}
+    
+
+def extract_ocr_for_file(file, doc_type):
+    image_bytes = file.read()
+    if not image_bytes:
+        raise Exception(f"Empty file received for {doc_type}")
+    processed_img = preprocess_image(image_bytes)
+    raw_text = extract_text(processed_img)
+    return clean_ocr_for_model(raw_text)
+
+
 # Routes
 @app.route('/', methods=['GET'])
 def home():
@@ -226,11 +268,8 @@ def home():
 
 @app.route('/extract-multiple', methods=['POST'])
 def extract_multiple():
-
     if not request.files:
         return jsonify({"error": "No files uploaded"}), 400
-
-    response = {}
 
     file_mapping = {
         "aadhaarFile": "aadhaar",
@@ -240,43 +279,92 @@ def extract_multiple():
     }
 
     try:
+        # Step 1: OCR all uploaded files (no model calls yet)
+        ocr_texts = {}
         for key, doc_name in file_mapping.items():
             if key in request.files:
-                result = process_file(request.files[key], doc_name)
-                response[doc_name] = result
+                ocr_texts[doc_name] = extract_ocr_for_file(request.files[key], doc_name)
 
-        if not response:
+        if not ocr_texts:
             return jsonify({"error": "No valid document keys provided"}), 400
 
-        # return jsonify({
-        #     "status": "success",
-        #     "documents": response
-        # })
+        # Step 2: Single combined model call
+        extracted_documents = call_model_combined(ocr_texts)
 
-        # Call form filling
-        # form_type = "aadhaar_form"
+        if "error" in extracted_documents:
+            return jsonify({"error": extracted_documents}), 500
+
+        # Step 3: Form filling (unchanged)
         form_type = request.form.get("formType")
-
         filled_form = fill_form(
-            {
-                "documents": response,
-                "status": "success"
-            },
+            {"documents": extracted_documents, "status": "success"},
             form_type
         )
 
         return jsonify({
             "status": "success",
-            "documents": response,
+            "documents": extracted_documents,
             "filled_form": filled_form
         })
 
-    # except Exception as e:
-    #     return jsonify({"error": str(e)}), 500
     except Exception as e:
         import traceback
-        traceback.print_exc()   # 🔥 ADD THIS
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+# @app.route('/extract-multiple', methods=['POST'])
+# def extract_multiple():
+
+#     if not request.files:
+#         return jsonify({"error": "No files uploaded"}), 400
+
+#     response = {}
+
+#     file_mapping = {
+#         "aadhaarFile": "aadhaar",
+#         "panFile": "pan",
+#         "dlFile": "driving_license",
+#         "passportFile": "passport"
+#     }
+
+#     try:
+#         for key, doc_name in file_mapping.items():
+#             if key in request.files:
+#                 result = process_file(request.files[key], doc_name)
+#                 response[doc_name] = result
+
+#         if not response:
+#             return jsonify({"error": "No valid document keys provided"}), 400
+
+#         # return jsonify({
+#         #     "status": "success",
+#         #     "documents": response
+#         # })
+
+#         # Call form filling
+#         # form_type = "aadhaar_form"
+#         form_type = request.form.get("formType")
+
+#         filled_form = fill_form(
+#             {
+#                 "documents": response,
+#                 "status": "success"
+#             },
+#             form_type
+#         )
+
+#         return jsonify({
+#             "status": "success",
+#             "documents": response,
+#             "filled_form": filled_form
+#         })
+
+#     # except Exception as e:
+#     #     return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()   # 🔥 ADD THIS
+#         return jsonify({"error": str(e)}), 500
 
 
 # Run

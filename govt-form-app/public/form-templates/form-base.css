@@ -1,0 +1,421 @@
+/* ============================================================
+   FORM ASSISTANT BASE STYLESHEET  v2
+   Government Form Filling Assistant
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ── CSS Variables ─────────────────────────────────────────── */
+:root {
+  --brand-red:       #C0392B;
+  --brand-blue:      #1A3A5C;
+  --brand-blue-mid:  #2563A8;
+  --brand-blue-soft: #EBF2FB;
+
+  --filled-bg:       #F0FBF4;
+  --filled-border:   #27AE60;
+  --filled-label:    #1E8449;
+
+  --empty-bg:        #FFFDF5;
+  --empty-border:    #E6B800;
+  --empty-label:     #7D6608;
+
+  --surface:         #FFFFFF;
+  --surface-alt:     #F7F9FC;
+  --border:          #D0D8E4;
+  --text-primary:    #0F1B2D;
+  --text-secondary:  #4A5568;
+  --text-muted:      #8898AA;
+
+  --radius-sm:       4px;
+  --radius-md:       8px;
+  --radius-lg:       12px;
+
+  --shadow-lg:       0 8px 28px rgba(0,0,0,.13);
+  --shadow-md:       0 4px 12px rgba(0,0,0,.10);
+
+  --transition:      160ms ease;
+
+  --font-body:       'IBM Plex Sans', sans-serif;
+  --font-mono:       'IBM Plex Mono', monospace;
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: #EEF2F7;
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Page Wrapper ───────────────────────────────────────────── */
+.form-page-wrapper { max-width: 900px; margin: 0 auto; padding: 32px 16px 80px; }
+
+/* ── Form Card ──────────────────────────────────────────────── */
+.form-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden; }
+
+/* ── Header ─────────────────────────────────────────────────── */
+.form-header {
+  background: var(--brand-blue); color: #fff;
+  padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.form-header .header-title-block { flex: 1; text-align: center; }
+.form-header .gov-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .75; font-weight: 500; }
+.form-header .form-title { font-size: 19px; font-weight: 700; margin-top: 2px; }
+.form-header .form-subtitle { font-size: 11px; opacity: .7; margin-top: 3px; font-weight: 400; line-height: 1.4; }
+
+/* Red title bar */
+.form-title-bar {
+  background: var(--brand-red); color: #fff; text-align: center;
+  padding: 10px 28px; font-size: 14.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+}
+
+/* ── Progress Bar ───────────────────────────────────────────── */
+.form-progress-bar {
+  background: var(--surface-alt); border-bottom: 1px solid var(--border);
+  padding: 11px 28px; display: flex; align-items: center; gap: 14px;
+}
+.form-progress-bar .progress-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+.progress-track { flex: 1; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--brand-blue-mid), var(--filled-border)); border-radius: 99px; transition: width .5s ease; }
+.progress-pct { font-size: 12px; font-weight: 700; color: var(--brand-blue-mid); font-family: var(--font-mono); white-space: nowrap; }
+
+/* ── Legend ─────────────────────────────────────────────────── */
+.form-legend {
+  display: flex; gap: 20px; padding: 8px 28px;
+  background: var(--surface-alt); border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+.legend-dot.filled { background: var(--filled-border); }
+.legend-dot.empty  { background: var(--empty-border); }
+.legend-tip { margin-left: auto; font-size: 10.5px; color: var(--text-muted); font-style: italic; }
+
+/* ── Notice ─────────────────────────────────────────────────── */
+.aadhaar-notice {
+  font-size: 11.5px; color: var(--text-secondary); line-height: 1.55;
+  padding: 9px 28px; background: #FDF8EE; border-bottom: 1px solid #F0D98A;
+}
+.aadhaar-notice strong { color: var(--brand-red); }
+
+/* ── Applicant Type Bar ─────────────────────────────────────── */
+.applicant-type-bar {
+  display: flex; gap: 24px; padding: 10px 28px;
+  background: #F0F4FA; border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 500; color: var(--text-secondary); flex-wrap: wrap; align-items: center;
+}
+.applicant-type-bar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.applicant-type-bar input[type="radio"] { accent-color: var(--brand-blue-mid); }
+.applicant-type-bar .note { margin-left: auto; font-size: 10.5px; color: var(--brand-red); font-weight: 600; font-style: italic; }
+
+/* ── Form Body ──────────────────────────────────────────────── */
+.form-body { padding: 24px 28px 32px; display: flex; flex-direction: column; gap: 0; }
+
+/* ── Section ─────────────────────────────────────────────────── */
+.form-section { margin-bottom: 24px; }
+.form-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .10em; color: var(--brand-blue);
+  border-bottom: 2px solid var(--brand-blue-soft);
+  padding-bottom: 6px; margin-bottom: 13px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── Field Grid ─────────────────────────────────────────────── */
+.fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.fields-grid .span-2 { grid-column: span 2; }
+@media (max-width: 580px) {
+  .fields-grid { grid-template-columns: 1fr; }
+  .fields-grid .span-2 { grid-column: span 1; }
+}
+
+/* ── Field Wrapper ──────────────────────────────────────────── */
+.field-wrapper {
+  position: relative; border-radius: var(--radius-md);
+  padding: 9px 12px 8px; border: 1.5px solid var(--border);
+  background: var(--surface);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  cursor: default;
+}
+.field-wrapper.is-filled { background: var(--filled-bg); border-color: var(--filled-border); }
+.field-wrapper.is-empty  { background: var(--empty-bg);  border-color: var(--empty-border); }
+
+.field-wrapper.is-active,
+.field-wrapper:focus-within { border-color: var(--brand-blue-mid); box-shadow: 0 0 0 3px rgba(37,99,168,.13); }
+.field-wrapper.is-filled.is-active,
+.field-wrapper.is-filled:focus-within { border-color: var(--filled-border); box-shadow: 0 0 0 3px rgba(39,174,96,.14); }
+.field-wrapper.is-empty.is-active,
+.field-wrapper.is-empty:focus-within  { border-color: #D4A500; box-shadow: 0 0 0 3px rgba(243,156,18,.16); }
+
+/* ── Label Row ───────────────────────────────────────────────── */
+.field-label-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.field-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-secondary); flex: 1;
+}
+.field-wrapper.is-filled .field-label { color: var(--filled-label); }
+.field-wrapper.is-empty  .field-label { color: var(--empty-label); }
+
+/* Status badge */
+.field-badge {
+  font-size: 8.5px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; border-radius: 3px; padding: 1px 5px; flex-shrink: 0;
+}
+.badge-filled   { background: var(--filled-border); color: #fff; }
+.badge-empty    { background: #E6B800; color: #fff; }
+.badge-optional { background: var(--text-muted); color: #fff; }
+
+/* Audio button */
+.audio-btn {
+  background: none; border: none; cursor: pointer; padding: 2px 3px;
+  border-radius: var(--radius-sm); color: var(--text-muted);
+  display: flex; align-items: center;
+  transition: color var(--transition), background var(--transition); line-height: 1; flex-shrink: 0;
+}
+.audio-btn:hover { color: var(--brand-blue-mid); background: var(--brand-blue-soft); }
+.audio-btn svg { width: 13px; height: 13px; }
+.field-wrapper.is-filled .audio-btn:hover { color: var(--filled-label); background: #D5F5E3; }
+.field-wrapper.is-empty  .audio-btn:hover { color: var(--empty-label);  background: #FEF9E7; }
+.audio-btn.speaking { color: var(--brand-blue-mid); }
+.audio-btn.speaking svg { animation: pulse .55s ease infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.3); } }
+
+/* ── Inputs ─────────────────────────────────────────────────── */
+.form-input, .form-select {
+  width: 100%; font-family: var(--font-body); font-size: 13.5px;
+  font-weight: 500; color: var(--text-primary); background: transparent;
+  border: none; outline: none; padding: 0; line-height: 1.5;
+}
+.form-select { cursor: pointer; }
+.field-wrapper.is-filled .form-input,
+.field-wrapper.is-filled .form-select { color: #145A32; font-weight: 600; }
+
+/* ── Instruction Panel — hidden by default, shown on active ── */
+.field-instruction {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  transition: max-height .3s cubic-bezier(0.4,0,0.2,1), opacity .25s ease, margin-top .25s ease;
+  pointer-events: none;
+}
+.field-wrapper.is-active .field-instruction,
+.field-wrapper:focus-within .field-instruction {
+  max-height: 140px;
+  opacity: 1;
+  margin-top: 7px;
+  pointer-events: auto;
+}
+.instruction-inner {
+  display: flex; align-items: flex-start; gap: 5px;
+  padding: 7px 10px; border-radius: var(--radius-sm);
+  font-size: 11px; line-height: 1.5;
+}
+.field-wrapper.is-filled .instruction-inner { background: #D5F5E3; }
+.field-wrapper.is-empty  .instruction-inner { background: #FEF9E7; }
+.field-wrapper:not(.is-filled):not(.is-empty) .instruction-inner { background: var(--brand-blue-soft); }
+.inst-icon { font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+.inst-text { color: var(--text-secondary); }
+.field-wrapper.is-filled .inst-text { color: #1E6E3E; }
+.field-wrapper.is-empty  .inst-text { color: #7D5A00; }
+
+/* ── Checkbox / Radio ────────────────────────────────────────── */
+.checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; }
+.checkbox-item { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.checkbox-item input[type="checkbox"],
+.checkbox-item input[type="radio"] { accent-color: var(--brand-blue-mid); width: 14px; height: 14px; cursor: pointer; }
+
+/* ── Aadhaar UID single-line input ──────────────────────────── */
+.uid-input-wrapper {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface-alt); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 5px 10px; margin-top: 3px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.field-wrapper.is-filled .uid-input-wrapper { background: #D5F5E3; border-color: var(--filled-border); }
+.uid-input-wrapper:focus-within { border-color: var(--brand-blue-mid); box-shadow: 0 0 0 2px rgba(37,99,168,.12); }
+.field-wrapper.is-filled .uid-input-wrapper:focus-within { border-color: var(--filled-border); box-shadow: 0 0 0 2px rgba(39,174,96,.14); }
+.uid-full-input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-family: var(--font-mono); font-size: 15px; font-weight: 600;
+  letter-spacing: .22em; color: var(--text-primary);
+}
+.field-wrapper.is-filled .uid-full-input { color: #145A32; }
+.uid-format-hint { font-size: 10px; color: var(--text-muted); white-space: nowrap; font-family: var(--font-body); letter-spacing: 0; }
+.field-wrapper.is-filled .uid-format-hint { color: #27AE60; }
+
+/* ── Update type ─────────────────────────────────────────────── */
+.update-type-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+.update-checkbox {
+  display: flex; align-items: center; gap: 5px; padding: 4px 9px;
+  border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+  font-size: 11.5px; font-weight: 500; cursor: pointer;
+  transition: border-color .15s, background .15s;
+  background: var(--surface); user-select: none;
+}
+.update-checkbox.checked { border-color: var(--filled-border); background: var(--filled-bg); color: var(--filled-label); }
+.update-checkbox input { accent-color: var(--filled-border); cursor: pointer; }
+
+/* ── Doc rows ────────────────────────────────────────────────── */
+.doc-rows { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
+.doc-row { display: grid; grid-template-columns: 20px 95px 1fr; align-items: center; gap: 8px; }
+.doc-row-label { font-size: 12px; font-weight: 700; color: var(--brand-blue); }
+.doc-row-sub { font-size: 10.5px; color: var(--text-secondary); font-style: italic; }
+.doc-input {
+  border: none; border-bottom: 1.5px solid var(--border); outline: none;
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  color: var(--text-primary); background: transparent; width: 100%; padding-bottom: 2px;
+}
+.field-wrapper.is-filled .doc-input { color: #145A32; font-weight: 600; }
+
+/* ── Field num badge ─────────────────────────────────────────── */
+.field-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 19px; height: 19px; border-radius: 50%;
+  background: var(--brand-blue); color: #fff; font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+
+/* ── Signature ───────────────────────────────────────────────── */
+.signature-area { display: flex; gap: 16px; padding: 12px 0 0; }
+.sig-box {
+  flex: 1; border: 1.5px dashed var(--border); border-radius: var(--radius-md);
+  min-height: 60px; display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 3px;
+}
+.sig-box span { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.sig-box small { font-size: 10.5px; color: var(--text-muted); }
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.form-footer {
+  display: flex; gap: 10px; padding: 16px 28px;
+  border-top: 1px solid var(--border); background: var(--surface-alt);
+  flex-wrap: wrap; justify-content: flex-end;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px;
+  border-radius: var(--radius-md); font-family: var(--font-body);
+  font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+  transition: opacity .16s, box-shadow .16s, transform .16s; letter-spacing: .02em;
+}
+.btn:hover { opacity: .87; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn:active { transform: translateY(0); }
+.btn-danger { background: var(--brand-red); color: #fff; }
+.btn-ghost  { background: transparent; color: var(--text-secondary); border: 1.5px solid var(--border); }
+
+/* ── Toast ───────────────────────────────────────────────────── */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--brand-blue); color: #fff; padding: 10px 18px;
+  border-radius: var(--radius-md); font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lg); animation: toastIn .25s ease;
+}
+@keyframes toastIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+/* ══════════════════════════════════════════════════════════════
+   PRINT STYLES
+   Colors present in original Aadhaar PDF only:
+     • #C0392B  — red title bar
+     • #000000  — all text
+     • #cccccc  — cell/field borders
+     • #ffffff  — all backgrounds
+   ══════════════════════════════════════════════════════════════ */
+@page {
+  size: A4 portrait;
+  margin: 12mm 14mm 14mm 14mm;
+}
+
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  html, body { width: 210mm; }
+  body { background: #fff !important; font-family: Arial, Helvetica, sans-serif !important; font-size: 10pt !important; }
+
+  .form-page-wrapper { max-width: 100% !important; padding: 0 !important; }
+  .form-card { box-shadow: none !important; border-radius: 0 !important; border: none !important; }
+
+  /* Header → white bg, black text, black bottom border */
+  .form-header {
+    background: #fff !important; color: #000 !important;
+    border-bottom: 2px solid #000 !important; padding: 10px 16px !important;
+  }
+  .form-header * { color: #000 !important; opacity: 1 !important; }
+  .form-header .form-title { font-size: 13pt !important; }
+  .form-header .gov-label,
+  .form-header .form-subtitle { font-size: 9pt !important; }
+
+  /* Red title bar — kept red as in PDF */
+  .form-title-bar { background: #C0392B !important; color: #fff !important; font-size: 11pt !important; padding: 6px 16px !important; }
+
+  /* Hide all interactive/UI chrome */
+  .form-progress-bar,
+  .form-legend,
+  .form-footer,
+  .audio-btn,
+  .field-badge,
+  .field-instruction,
+  .toast-container { display: none !important; }
+
+  .aadhaar-notice {
+    background: #fff !important; border: none !important;
+    border-bottom: 1px solid #ccc !important; padding: 5px 16px !important; font-size: 9pt !important;
+  }
+  .aadhaar-notice strong { color: #000 !important; }
+
+  .applicant-type-bar {
+    background: #fff !important; border-bottom: 1px solid #ccc !important;
+    padding: 5px 16px !important; font-size: 10pt !important;
+  }
+  .applicant-type-bar .note { display: none !important; }
+
+  .form-body { padding: 10px 16px 16px !important; }
+  .form-section { margin-bottom: 14px !important; }
+  .fields-grid { gap: 7px !important; }
+
+  .form-section-title {
+    font-size: 9pt !important; color: #000 !important;
+    border-bottom: 1px solid #ccc !important; padding-bottom: 4px !important; margin-bottom: 8px !important;
+  }
+  .field-num { background: #000 !important; color: #fff !important; }
+
+  /* All field wrappers: white bg, gray border, no color fills */
+  .field-wrapper,
+  .field-wrapper.is-filled,
+  .field-wrapper.is-empty {
+    background: #fff !important; border: 1px solid #ccc !important;
+    border-radius: 0 !important; padding: 5px 7px !important;
+    box-shadow: none !important; page-break-inside: avoid !important;
+  }
+
+  .field-label,
+  .field-wrapper.is-filled .field-label,
+  .field-wrapper.is-empty .field-label { color: #555 !important; font-size: 7.5pt !important; }
+
+  .form-input,
+  .form-select,
+  .field-wrapper.is-filled .form-input,
+  .field-wrapper.is-filled .form-select { color: #000 !important; font-size: 11pt !important; font-weight: 400 !important; }
+
+  .uid-input-wrapper,
+  .field-wrapper.is-filled .uid-input-wrapper {
+    background: #fff !important; border: 1px solid #ccc !important;
+  }
+  .uid-full-input,
+  .field-wrapper.is-filled .uid-full-input { color: #000 !important; font-size: 12pt !important; font-weight: 400 !important; letter-spacing: .25em !important; }
+  .uid-format-hint { display: none !important; }
+
+  .doc-input,
+  .field-wrapper.is-filled .doc-input { color: #000 !important; font-weight: 400 !important; border-bottom-color: #ccc !important; }
+
+  .update-checkbox,
+  .update-checkbox.checked { background: #fff !important; border-color: #ccc !important; color: #000 !important; }
+
+  .checkbox-item input[type="radio"],
+  .checkbox-item input[type="checkbox"] { accent-color: #000 !important; }
+
+  .sig-box { border: 1px dashed #ccc !important; }
+  .sig-box span { color: #000 !important; }
+  .sig-box small { color: #555 !important; }
+}

@@ -17,3 +17,17 @@ def build_form_filling_prompt(form_structure, extracted_data):
     prompt = prompt.replace("{extracted_data}", json.dumps(extracted_data, indent=2))
 
     return prompt
+
+def build_combined_extraction_prompt(ocr_texts_by_type: dict) -> str:
+    """
+    Loads combined_extraction_prompt.txt and injects all OCR texts.
+    ocr_texts_by_type: { "aadhaar": "...", "pan": "...", ... }
+    """
+    with open("modelPrompts/combined_extraction_prompt.txt", "r") as f:
+        template = f.read()
+
+    sections = ""
+    for doc_type, ocr_text in ocr_texts_by_type.items():
+        sections += f"\n--- DOCUMENT: {doc_type.upper()} ---\n{ocr_text}\n"
+
+    return template.replace("{documents_section}", sections)

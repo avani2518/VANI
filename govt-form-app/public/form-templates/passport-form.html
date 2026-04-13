@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<!--
+  GOVERNMENT OF INDIA — PASSPORT APPLICATION FORM
+  JSON-driven: all field values and states derived from FORM_DATA.
+  Extends form-base.css structure identical to Aadhaar / Voter-ID forms.
+  Audio buttons toggle speak/stop on repeated click.
+  Extra fields added beyond API response:
+    - Mother's full name (standard passport requirement)
+    - Spouse's full name (if married)
+    - Place of birth
+    - Marital status
+    - Occupation
+    - Emergency contact
+    - Document-based verification (POI, POA, POD)
+    - Photograph upload zone (print placeholder)
+    - Previous passport details
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Passport Application Form | Government of India</title>
+  <link rel="stylesheet" href="form-base.css" />
+  <style>
+    /* ── Name triplet grid ────────────────────────────────────── */
+    .name-triplet {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 11px;
+    }
+    @media (max-width: 680px) { .name-triplet { grid-template-columns: 1fr; } }
+
+    /* ── 2-col grid ───────────────────────────────────────────── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 11px;
+    }
+    @media (max-width: 580px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── Relation / gender radio pills ───────────────────────── */
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .pill-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #D0D8E4;
+      background: #F7F9FC;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 140ms, background 140ms;
+    }
+    .pill-item input[type="radio"] { accent-color: #27AE60; cursor: pointer; }
+    .pill-item.checked { border-color: #27AE60; background: #F0FBF4; color: #1E8449; font-weight: 600; }
+
+    /* ── Aadhaar / UID input ─────────────────────────────────── */
+    .uid-input-wrapper { position: relative; }
+    .uid-full-input {
+      width: 100%;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 17px;
+      letter-spacing: 0.12em;
+      padding: 10px 12px;
+      border: 1.5px solid #D0D8E4;
+      border-radius: 6px;
+      outline: none;
+      background: #fff;
+      transition: border-color 140ms;
+    }
+    .uid-full-input:focus { border-color: #2563A8; }
+    .uid-format-hint {
+      position: absolute;
+      right: 10px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: #8898AA;
+      pointer-events: none;
+    }
+
+    /* ── Photo placeholder ───────────────────────────────────── */
+    .photo-zone {
+      border: 2px dashed #B0BEC5;
+      border-radius: 8px;
+      width: 120px;
+      height: 150px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #8898AA;
+      text-align: center;
+      padding: 10px;
+      flex-shrink: 0;
+    }
+    .photo-zone .photo-icon { font-size: 28px; }
+
+    /* ── File no. sidebar ────────────────────────────────────── */
+    .file-no-box {
+      border: 1.5px solid #D0D8E4;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 12.5px;
+      color: #4A5568;
+      background: #F7F9FC;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .file-no-box .file-label { font-weight: 700; font-size: 13px; color: #0F1B2D; }
+    .file-no-box .file-note { font-style: italic; font-size: 11.5px; color: #8898AA; }
+    .file-no-box input {
+      border: none;
+      border-bottom: 1.5px solid #D0D8E4;
+      outline: none;
+      font-size: 15px;
+      font-family: 'IBM Plex Mono', monospace;
+      background: transparent;
+      color: #0F1B2D;
+      padding: 4px 2px;
+      width: 100%;
+    }
+
+    /* ── Header top row (logo + photo zone) ─────────────────── */
+    .passport-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 28px 0;
+    }
+    .passport-top .photo-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* ── Doc verification rows ───────────────────────────────── */
+    .doc-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid #EEF2F7;
+    }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-row-label { font-size: 13px; color: #4A5568; font-weight: 500; }
+
+    /* ── Signature area ──────────────────────────────────────── */
+    .signature-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .sig-box {
+      border: 1.5px dashed #B0BEC5;
+      border-radius: 8px;
+      height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #8898AA;
+      font-size: 13px;
+      gap: 4px;
+    }
+    .sig-box small { font-size: 11px; opacity: .7; }
+
+    /* ── Passport notice ─────────────────────────────────────── */
+    .passport-notice {
+      background: #EBF2FB;
+      border-left: 4px solid #2563A8;
+      margin: 16px 28px 0;
+      padding: 12px 18px;
+      font-size: 12.5px;
+      color: #1A3A5C;
+      line-height: 1.6;
+    }
+
+    /* ── Print — clean B&W ───────────────────────────────────── */
+    @media print {
+      .form-progress-bar, .form-legend, .form-footer,
+      .field-instruction, .audio-btn, .toast-container,
+      .passport-notice { display: none !important; }
+
+      .form-card { box-shadow: none !important; border-radius: 0 !important; }
+      .form-page-wrapper { padding: 0 !important; max-width: 100% !important; }
+      body { background: #fff !important; }
+
+      .form-header { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .form-title-bar { background: #C0392B !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      .field-wrapper,
+      .field-wrapper.is-filled,
+      .field-wrapper.is-empty,
+      .field-wrapper.is-active {
+        background: #fff !important;
+        border-color: #ccc !important;
+      }
+
+      .field-badge, .badge-filled, .badge-empty, .badge-optional {
+        background: none !important;
+        color: #000 !important;
+        border: 1px solid #ccc !important;
+      }
+
+      .form-input, .form-select, .uid-full-input {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+      }
+
+      .field-label { color: #000 !important; }
+      .form-section-title { color: #000 !important; border-color: #ccc !important; }
+      .field-num { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      .pill-item, .pill-item.checked {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+        font-weight: 400 !important;
+      }
+
+      .photo-zone {
+        border-color: #ccc !important;
+        color: #000 !important;
+      }
+
+      .file-no-box {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+      }
+
+      .sig-box { border-color: #ccc !important; color: #000 !important; }
+
+      .doc-row { border-color: #ccc !important; }
+
+      .declaration-block {
+        background: #fff !important;
+        border-color: #ccc !important;
+        color: #000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="form-page-wrapper">
+  <div class="form-card">
+
+    <!-- ══ Header ══════════════════════════════════════════════ -->
+    <div class="form-header">
+      <div style="width:56px; display:flex; align-items:center; justify-content:center;">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <circle cx="26" cy="26" r="25" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+          <circle cx="26" cy="26" r="18" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+          <text x="26" y="32" text-anchor="middle" font-size="20" fill="white">🇮🇳</text>
+        </svg>
+      </div>
+      <div class="header-title-block">
+        <div class="gov-label">Ministry of External Affairs · Government of India</div>
+        <div class="form-title">Passport Application Form</div>
+        <div class="form-subtitle">Fresh / Re-issue Passport Application · Passport Seva</div>
+      </div>
+      <div style="width:56px; display:flex; align-items:center; justify-content:center;">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <rect width="52" height="52" rx="9" fill="rgba(255,255,255,0.12)"/>
+          <text x="26" y="35" text-anchor="middle" font-size="26" fill="white">📘</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ══ Red Title Bar ════════════════════════════════════════ -->
+    <div class="form-title-bar">Government of India — Passport Application Form</div>
+
+    <!-- ══ Instructions + File No. ════════════════════════════ -->
+    <div style="display:grid; grid-template-columns:1fr 170px; gap:0; border-bottom:1px solid #D0D8E4;">
+
+      <!-- Left: instructions -->
+      <div style="padding:16px 20px 16px 28px; border-right:1px solid #D0D8E4; display:flex; align-items:center;">
+        <div style="background:#EBF2FB; border-left:4px solid #2563A8; padding:11px 15px; border-radius:6px; font-size:12.5px; color:#1A3A5C; line-height:1.65; width:100%;">
+          <strong>Instructions:</strong> Fill all fields in <strong>BLOCK / CAPITAL LETTERS</strong>.
+          Do not leave any mandatory field blank — write <em>N/A</em> if not applicable.
+          This form is for both Fresh and Re-issue passport applications.
+          Refer to the Passport Seva portal (passportindia.gov.in) for the list of accepted documents.
+        </div>
+      </div>
+
+      <!-- Right: file number only, vertically centred -->
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px 14px; gap:8px; background:#F7F9FC;">
+        <div style="font-size:12px; font-weight:700; color:#0F1B2D; letter-spacing:.06em; text-align:center;">FILE No.</div>
+        <input type="text" id="field-file-no" placeholder="———————————"
+          style="border:none; border-bottom:2px solid #CCC; outline:none; font-size:13px;
+                 font-family:'IBM Plex Mono',monospace; background:transparent; color:#0F1B2D;
+                 padding:3px 0; width:100%; text-align:center;" />
+        <div style="font-size:10.5px; color:#8898AA; font-style:italic; text-align:center;">(To be filled by office)</div>
+      </div>
+
+    </div>
+
+    <!-- ══ Progress Bar ═════════════════════════════════════════ -->
+    <div class="form-progress-bar">
+      <span class="progress-label">Completion</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+
+    <!-- ══ Legend ════════════════════════════════════════════════ -->
+    <div class="form-legend">
+      <div class="legend-item"><span class="legend-dot filled"></span> Auto-filled from your documents</div>
+      <div class="legend-item"><span class="legend-dot empty"></span> Requires your input</div>
+      <span class="legend-tip">Click any field to see instructions · 🔊 for voice</span>
+    </div>
+
+    <!-- ══ Form Body ══════════════════════════════════════════════ -->
+    <div class="form-body" id="formBody"></div>
+
+    <!-- ══ Footer ════════════════════════════════════════════════ -->
+    <div class="form-footer">
+      <button class="btn btn-ghost" id="resetBtn">↺ Reset</button>
+      <button class="btn btn-danger" onclick="window.print()">🖨 Print Form</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   FORM DATA — replace with live API response
+   "$" = user must fill; anything else = auto-filled
+   ═══════════════════════════════════════════════════════════════ */
+const FORM_DATA = {
+  "filled_form": {
+    "aadhar_number_uid": "123456789012",
+    "date_of_birth": "15/06/1995",
+    "email_id": "$",
+    "father_name": {
+      "father's_first_name": "$",
+      "father's_middle_name": "$",
+      "father's_surname": "$"
+    },
+    "form_title": "GOVERNMENT OF INDIA - PASSPORT APPLICATION FORM",
+    "full_address": {
+      "district": "$",
+      "house_no_or_building_or_apartment": "$",
+      "pincode": "$",
+      "post_office": "$",
+      "street_area_locality": "$",
+      "village_town_city": "$"
+    },
+    "full_name": {
+      "first_name": "John",
+      "middle_name": "$",
+      "surname": "Doe"
+    },
+    "gender": {
+      "female": "$",
+      "male": "yes",
+      "transgender": "$"
+    },
+    "mobile_number": "$",
+    "office_use_only": {
+      "file_no": "$"
+    }
+  },
+  "status": "success"
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+const fd = FORM_DATA.filled_form;
+function isFilled(val) { return val && val !== "$"; }
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function audioBtn() {
+  return `<button class="audio-btn" onclick="event.stopPropagation();FormAssistant.toggleSpeak(this)" title="Read / stop instruction">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+  </button>`;
+}
+
+function fieldWrapper({ id, label, type="text", value, placeholder, instruction, optional=false, extraAttrs="" }) {
+  const filled = isFilled(value);
+  const stateClass = filled ? "is-filled" : "is-empty";
+  const badge = filled
+    ? `<span class="field-badge badge-filled">Auto-filled</span>`
+    : optional
+      ? `<span class="field-badge badge-optional">Optional</span>`
+      : `<span class="field-badge badge-empty">Required</span>`;
+  const icon = filled ? "✅" : "📌";
+  const val  = filled ? `value="${escHtml(value)}"` : "";
+  const optAttr = optional ? ' data-optional="true"' : "";
+  return `
+    <div class="field-wrapper ${stateClass}" id="wrapper-${id}"${optAttr}>
+      <div class="field-label-row">
+        <span class="field-label">${label}</span>
+        ${badge}
+        ${audioBtn()}
+      </div>
+      <input class="form-input" id="field-${id}" type="${type}" ${val} placeholder="${placeholder}" ${extraAttrs} />
+      <div class="field-instruction"><div class="instruction-inner">
+        <span class="inst-icon">${icon}</span>
+        <span class="inst-text">${instruction}</span>
+      </div></div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 1 — Full Name
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection1() {
+  const n = fd.full_name;
+  const mkInst = (part, val) => isFilled(val)
+    ? `Your ${part} was auto-filled as "${val}" from your documents. Verify each letter matches your identity document exactly.`
+    : `Enter your ${part} in BLOCK LETTERS exactly as it appears on the document you are submitting as Proof of Identity. Do not use initials.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">1</span> Full Name <small style="font-weight:400;font-size:12px;">(As per document to be submitted)</small></div>
+      <div class="name-triplet">
+        ${fieldWrapper({ id:"fn-first", label:"First Name", value:n.first_name, placeholder:"e.g. JOHN", instruction:mkInst("first name", n.first_name) })}
+        ${fieldWrapper({ id:"fn-middle", label:"Middle Name", value:n.middle_name, placeholder:"e.g. WILLIAM (if any)", instruction:mkInst("middle name", n.middle_name), optional:true })}
+        ${fieldWrapper({ id:"fn-surname", label:"Surname", value:n.surname, placeholder:"e.g. DOE", instruction:mkInst("surname", n.surname) })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 2 — Gender
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection2() {
+  const g = fd.gender;
+  const genderMap = { male:"Male", female:"Female", transgender:"Transgender" };
+  const selected = Object.keys(genderMap).find(k => isFilled(g[k]));
+  const filled = !!selected;
+
+  const inst = filled
+    ? `Gender was auto-detected as "${genderMap[selected]}" from your documents. Select the correct option if this needs to change.`
+    : `Select your gender as it should appear in the passport.`;
+
+  const pills = Object.entries(genderMap).map(([k,label]) =>
+    `<label class="pill-item${isFilled(g[k])?' checked':''}">
+      <input type="radio" name="gender" value="${k}" ${isFilled(g[k])?'checked':''}/> ${label}
+    </label>`).join('');
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">2</span> Gender</div>
+      <div class="field-wrapper ${filled?'is-filled':'is-empty'}" id="wrapper-gender">
+        <div class="field-label-row">
+          <span class="field-label">Select Gender</span>
+          ${filled?'<span class="field-badge badge-filled">Auto-filled</span>':'<span class="field-badge badge-empty">Required</span>'}
+          ${audioBtn()}
+        </div>
+        <div class="pill-group">${pills}</div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">${filled?'✅':'📌'}</span>
+          <span class="inst-text">${inst}</span>
+        </div></div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 3 — Date of Birth & Place of Birth
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection3() {
+  const dob = fd.date_of_birth;
+  const dobFilled = isFilled(dob);
+  const dobInst = dobFilled
+    ? `Date of Birth was auto-filled as "${dob}" from your documents. Verify day, month, and year are correct. This must match your Proof of Date of Birth document exactly.`
+    : `Enter your Date of Birth in DD/MM/YYYY format. This must exactly match your Proof of Date of Birth document (birth certificate, Aadhaar, etc.).`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">3</span> Date of Birth &amp; Place of Birth</div>
+      <div class="two-col">
+        ${fieldWrapper({ id:"dob", label:"Date of Birth (DD/MM/YYYY)", value:dob, placeholder:"DD/MM/YYYY",
+            instruction:dobInst, extraAttrs:'maxlength="10" inputmode="numeric"' })}
+        ${fieldWrapper({ id:"pob", label:"Place of Birth (City / Town)", value:"$", placeholder:"e.g. Pune",
+            instruction:"Enter the city or town where you were born, as stated in your birth certificate or other date-of-birth proof. If born in a village, mention the nearest town." })}
+      </div>
+      <div class="two-col" style="margin-top:11px;">
+        ${fieldWrapper({ id:"pob-district", label:"District of Birth", value:"$", placeholder:"e.g. Pune",
+            instruction:"Enter the district in which your place of birth falls. This must match your birth certificate." })}
+        ${fieldWrapper({ id:"pob-state", label:"State / Country of Birth", value:"$", placeholder:"e.g. Maharashtra / India",
+            instruction:"Enter the State (if born in India) or country name if born abroad. Indian residents born abroad should enter the country name." })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 4 — Father's / Legal Guardian's Name
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection4() {
+  const fn = fd.father_name;
+  const mkInst = (part, val) => isFilled(val)
+    ? `Father's ${part} was auto-filled as "${val}". Verify it matches the official document.`
+    : `Enter your father's / legal guardian's ${part} in BLOCK LETTERS as it appears on an official identity document.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">4</span> Father's / Legal Guardian's Full Name</div>
+      <div class="name-triplet">
+        ${fieldWrapper({ id:"dad-first", label:"First Name", value:fn["father's_first_name"], placeholder:"FIRST NAME",
+            instruction:mkInst("first name", fn["father's_first_name"]) })}
+        ${fieldWrapper({ id:"dad-middle", label:"Middle Name", value:fn["father's_middle_name"], placeholder:"MIDDLE NAME (if any)",
+            instruction:mkInst("middle name", fn["father's_middle_name"]), optional:true })}
+        ${fieldWrapper({ id:"dad-surname", label:"Surname", value:fn["father's_surname"], placeholder:"SURNAME",
+            instruction:mkInst("surname", fn["father's_surname"]) })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5 — Mother's Full Name
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection5() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">5</span> Mother's Full Name</div>
+      <div class="name-triplet">
+        ${fieldWrapper({ id:"mom-first", label:"First Name", value:"$", placeholder:"FIRST NAME",
+            instruction:"Enter your mother's first name in BLOCK LETTERS as it appears on her official identity document." })}
+        ${fieldWrapper({ id:"mom-middle", label:"Middle Name", value:"$", placeholder:"MIDDLE NAME (if any)",
+            instruction:"Enter your mother's middle name if she has one. Leave blank or write N/A if not applicable.", optional:true })}
+        ${fieldWrapper({ id:"mom-surname", label:"Surname", value:"$", placeholder:"SURNAME",
+            instruction:"Enter your mother's surname in BLOCK LETTERS. This is required as standard information in the passport application." })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 6 — Marital Status & Spouse Name
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection6() {
+  const STATUSES = ["Single","Married","Divorced","Widowed","Separated"];
+  const pills = STATUSES.map(s =>
+    `<label class="pill-item"><input type="radio" name="marital_status" value="${s}"/> ${s}</label>`).join('');
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">6</span> Marital Status &amp; Spouse's Full Name</div>
+
+      <div class="field-wrapper is-empty" id="wrapper-marital" style="margin-bottom:12px;">
+        <div class="field-label-row">
+          <span class="field-label">Marital Status</span>
+          <span class="field-badge badge-empty">Required</span>
+          ${audioBtn()}
+        </div>
+        <div class="pill-group">${pills}</div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">📌</span>
+          <span class="inst-text">Select your current marital status. If married, please fill in your spouse's name below.</span>
+        </div></div>
+      </div>
+
+      <div class="name-triplet" id="spouseNameRow">
+        ${fieldWrapper({ id:"sp-first", label:"Spouse's First Name", value:"$", placeholder:"FIRST NAME",
+            instruction:"Enter your spouse's first name in BLOCK LETTERS if you are married. Write N/A if not applicable.", optional:true })}
+        ${fieldWrapper({ id:"sp-middle", label:"Spouse's Middle Name", value:"$", placeholder:"MIDDLE NAME",
+            instruction:"Enter your spouse's middle name if applicable. Leave blank if none.", optional:true })}
+        ${fieldWrapper({ id:"sp-surname", label:"Spouse's Surname", value:"$", placeholder:"SURNAME",
+            instruction:"Enter your spouse's surname in BLOCK LETTERS. Required only if married.", optional:true })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 7 — Mobile & Email
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection7() {
+  const mob = fd.mobile_number;
+  const email = fd.email_id;
+  const mobInst = isFilled(mob)
+    ? `Mobile number was auto-filled as "${mob}". Verify this is your active number — it will be used for Passport Seva OTP and notifications.`
+    : `Enter your active 10-digit Indian mobile number (without country code). This will be used for application status updates and OTP verification at Passport Seva Kendra.`;
+  const emailInst = isFilled(email)
+    ? `Email was auto-filled as "${email}". Verify it is correct and accessible.`
+    : `Enter a valid email address you check regularly. You will receive appointment confirmations and application updates at this address.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">7</span> Mobile Number &amp; E-Mail ID</div>
+      <div class="two-col">
+        ${fieldWrapper({ id:"mobile", label:"Mobile Number", type:"tel", value:mob,
+            placeholder:"10-digit mobile number", instruction:mobInst, extraAttrs:'maxlength="10" inputmode="numeric"' })}
+        ${fieldWrapper({ id:"email", label:"E-Mail ID", type:"email", value:email,
+            placeholder:"yourname@email.com", instruction:emailInst })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 8 — Emergency Contact
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection8() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">8</span> Emergency Contact Details</div>
+      <div class="two-col">
+        ${fieldWrapper({ id:"emg-name", label:"Emergency Contact Name", value:"$", placeholder:"Full name",
+            instruction:"Enter the full name of a person who can be contacted in case of an emergency — a family member or close friend who is NOT travelling with you." })}
+        ${fieldWrapper({ id:"emg-mobile", label:"Emergency Contact Mobile", type:"tel", value:"$",
+            placeholder:"10-digit mobile number", instruction:"Enter the mobile number of your emergency contact. This should be a person residing in India who can be reached at any time.", extraAttrs:'maxlength="10" inputmode="numeric"' })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 9 — Aadhaar (UID)
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection9() {
+  const uid = fd.aadhar_number_uid;
+  const filled = isFilled(uid);
+  const inst = filled
+    ? `Your Aadhaar number was auto-filled as ${uid} from your submitted documents. Verify each digit carefully. Providing Aadhaar significantly speeds up passport processing.`
+    : `Enter your 12-digit Aadhaar number. It will auto-format with spaces as you type. Providing Aadhaar is voluntary but recommended for faster processing.`;
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">9</span> Aadhaar Number (UID)</div>
+      <div class="field-wrapper ${filled?'is-filled':'is-empty'}" id="wrapper-aadhaar">
+        <div class="field-label-row">
+          <span class="field-label">Aadhaar Number</span>
+          ${filled?'<span class="field-badge badge-filled">Auto-filled</span>':'<span class="field-badge badge-optional">Voluntary</span>'}
+          ${audioBtn()}
+        </div>
+        <div class="uid-input-wrapper">
+          <input class="uid-full-input" id="field-aadhaar" type="text" inputmode="numeric" maxlength="14"
+            ${filled?`value="${escHtml(uid)}"`:''} placeholder="XXXX XXXX XXXX" />
+          <span class="uid-format-hint">12 digits</span>
+        </div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">${filled?'✅':'📌'}</span>
+          <span class="inst-text">${inst}</span>
+        </div></div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 10 — Full Address
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection10() {
+  const ad = fd.full_address;
+  const STATES = ["Andaman &amp; Nicobar Islands","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh (UT)","Chhattisgarh","Delhi (NCT)","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu &amp; Kashmir (UT)","Jharkhand","Karnataka","Kerala","Ladakh (UT)","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Puducherry (UT)","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
+
+  const mkInst = (label, val, emptyInst) => isFilled(val)
+    ? `${label} was auto-filled as "${val}" from your documents. Verify it matches your address proof.`
+    : emptyInst;
+
+  const stateFilled = false; // not in API response
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">10</span> Full Address <small style="font-weight:400;font-size:12px;">(Current Residential)</small></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+
+        ${fieldWrapper({ id:"addr-house", label:"(a) House No. / Building / Apartment No.", value:ad.house_no_or_building_or_apartment,
+            placeholder:"e.g. 12B, Flat 3, Wing A",
+            instruction:mkInst("House/Building/Apartment", ad.house_no_or_building_or_apartment, "Enter your house number, flat/apartment number, building name exactly as it appears on your address proof document.") })}
+
+        ${fieldWrapper({ id:"addr-street", label:"(b) Street / Area / Locality", value:ad.street_area_locality,
+            placeholder:"e.g. Koregaon Park, MG Road",
+            instruction:mkInst("Street/Area", ad.street_area_locality, "Enter the name of your street, area, or locality as written on your address proof.") })}
+
+        ${fieldWrapper({ id:"addr-city", label:"(c) Village / Town / City", value:ad.village_town_city,
+            placeholder:"e.g. Pune",
+            instruction:mkInst("Village/Town/City", ad.village_town_city, "Enter the name of your city, town, or village as it appears on your address proof.") })}
+
+        ${fieldWrapper({ id:"addr-po", label:"(d) Post Office", value:ad.post_office,
+            placeholder:"Name of local post office",
+            instruction:mkInst("Post Office", ad.post_office, "Enter the name of the post office serving your residential address area.") })}
+
+        ${fieldWrapper({ id:"addr-pin", label:"PIN Code", value:ad.pincode,
+            placeholder:"6-digit PIN code", extraAttrs:'maxlength="6" inputmode="numeric"',
+            instruction:mkInst("PIN Code", ad.pincode, "Enter the 6-digit postal code for your current address. Must match your address proof.") })}
+
+        ${fieldWrapper({ id:"addr-district", label:"(e) District", value:ad.district,
+            placeholder:"e.g. Pune, Mumbai Suburban",
+            instruction:mkInst("District", ad.district, "Enter your district name as it appears on your address proof document.") })}
+
+        <!-- State select -->
+        <div class="field-wrapper is-empty" id="wrapper-addr-state">
+          <div class="field-label-row">
+            <span class="field-label">(f) State / UT</span>
+            <span class="field-badge badge-empty">Required</span>
+            ${audioBtn()}
+          </div>
+          <select class="form-select" id="field-addr-state">
+            <option value="">-- Select State / UT --</option>
+            ${STATES.map(s=>`<option>${s}</option>`).join('')}
+          </select>
+          <div class="field-instruction"><div class="instruction-inner">
+            <span class="inst-icon">📌</span>
+            <span class="inst-text">Select the State or Union Territory where you currently reside. Must match your address proof.</span>
+          </div></div>
+        </div>
+
+        ${fieldWrapper({ id:"addr-police", label:"(g) Police Station / Jurisdiction", value:"$",
+            placeholder:"Name of nearest police station",
+            instruction:"Enter the name of the police station under whose jurisdiction your residential address falls. This is required for police verification." })}
+
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 11 — Occupation & Organisation
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection11() {
+  const OCC = ["Student","Government Employee","Private Sector","Self-Employed / Business","Homemaker","Retired","Professional (Doctor / Lawyer / CA etc.)","Other"];
+  const pills = OCC.map(o =>
+    `<label class="pill-item"><input type="radio" name="occupation" value="${o}"/> ${o}</label>`).join('');
+
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">11</span> Occupation &amp; Organisation</div>
+      <div class="field-wrapper is-empty" id="wrapper-occupation" style="margin-bottom:12px;">
+        <div class="field-label-row">
+          <span class="field-label">Occupation</span>
+          <span class="field-badge badge-empty">Required</span>
+          ${audioBtn()}
+        </div>
+        <div class="pill-group">${pills}</div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">📌</span>
+          <span class="inst-text">Select your current occupation. If you are employed (Government or Private), please also fill in your organisation name and designation below.</span>
+        </div></div>
+      </div>
+      <div class="two-col">
+        ${fieldWrapper({ id:"org-name", label:"Organisation / Employer Name", value:"$",
+            placeholder:"e.g. Tata Consultancy Services", optional:true,
+            instruction:"Enter the name of your current employer or organisation. Leave blank if self-employed, student, or homemaker." })}
+        ${fieldWrapper({ id:"designation", label:"Designation / Role", value:"$",
+            placeholder:"e.g. Senior Engineer", optional:true,
+            instruction:"Enter your job title or designation at your current organisation. Leave blank if not employed." })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 12 — Document-Based Verification
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection12() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">12</span> For Document-Based Verification <small style="font-weight:400;font-size:12px;">(Documents being submitted)</small></div>
+      <div class="field-wrapper is-empty" id="wrapper-doc-verify">
+        <div class="field-label-row">
+          <span class="field-label">Submitted Documents</span>
+          <span class="field-badge badge-empty">Required</span>
+          ${audioBtn()}
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">
+          <div class="doc-row">
+            <span class="doc-row-label">(a) Proof of Date of Birth:</span>
+            <input class="form-input" id="field-pod" type="text" placeholder="e.g. Birth Certificate, Aadhaar Card" style="margin:0;" />
+          </div>
+          <div class="doc-row">
+            <span class="doc-row-label">(b) Proof of Address:</span>
+            <input class="form-input" id="field-poa" type="text" placeholder="e.g. Aadhaar Card, Utility Bill" style="margin:0;" />
+          </div>
+          <div class="doc-row">
+            <span class="doc-row-label">(c) Proof of Identity:</span>
+            <input class="form-input" id="field-poi" type="text" placeholder="e.g. Aadhaar Card, PAN Card" style="margin:0;" />
+          </div>
+        </div>
+        <div class="field-instruction"><div class="instruction-inner">
+          <span class="inst-icon">📌</span>
+          <span class="inst-text">Enter the name of the document you are submitting for each verification category. Refer to the Passport Seva website for the accepted document list. A single document (e.g. Aadhaar) may serve as proof for multiple categories.</span>
+        </div></div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 13 — Previous Passport Details
+   ═══════════════════════════════════════════════════════════════ */
+function renderSection13() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title"><span class="field-num">13</span> Previous Passport Details <small style="font-weight:400;font-size:12px;">(For Re-issue applications only)</small></div>
+      <div style="background:#FFFDF5; border:1.5px solid #E6B800; border-radius:7px; padding:10px 14px; font-size:12.5px; color:#7D6608; margin-bottom:12px;">
+        Fill this section <strong>only</strong> if you are applying for a <strong>re-issue</strong> of an existing/expired passport. Leave blank for a fresh application.
+      </div>
+      <div class="two-col">
+        ${fieldWrapper({ id:"prev-pass-no", label:"Previous Passport Number", value:"$",
+            placeholder:"e.g. A1234567", optional:true,
+            instruction:"Enter your previous passport number exactly as printed on the passport booklet. Leave blank if applying for a passport for the first time." })}
+        ${fieldWrapper({ id:"prev-pass-date", label:"Date of Issue of Previous Passport", value:"$",
+            placeholder:"DD/MM/YYYY", optional:true, extraAttrs:'maxlength="10"',
+            instruction:"Enter the date of issue printed on your previous passport in DD/MM/YYYY format." })}
+        ${fieldWrapper({ id:"prev-pass-expiry", label:"Date of Expiry of Previous Passport", value:"$",
+            placeholder:"DD/MM/YYYY", optional:true, extraAttrs:'maxlength="10"',
+            instruction:"Enter the expiry date on your previous passport in DD/MM/YYYY format." })}
+        ${fieldWrapper({ id:"prev-pass-psa", label:"Previous Passport Issuing Authority (PSA)", value:"$",
+            placeholder:"e.g. RPO Pune", optional:true,
+            instruction:"Enter the Passport Seva Authorty (Regional Passport Office) that issued your previous passport. This is printed on the data page of the old passport." })}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DECLARATION & SIGNATURE
+   ═══════════════════════════════════════════════════════════════ */
+function renderSignature() {
+  return `
+    <div class="form-section">
+      <div class="form-section-title">Declaration &amp; Signature / Thumb Impression</div>
+      <div class="declaration-block" style="background:#F7F9FC; border:1.5px solid #D0D8E4; border-radius:8px; padding:14px 16px; font-size:12.5px; color:#4A5568; line-height:1.7; margin-bottom:14px;">
+        I hereby declare that the particulars given above are true and correct to the best of my knowledge and belief, and I have not suppressed any material information. I am aware that giving false information is an offence punishable under the Passports Act, 1967 and other applicable laws.
+      </div>
+      <div class="signature-area">
+        <div class="sig-box"><span>Applicant's Signature</span><small>or Left Thumb Impression</small></div>
+        <div class="sig-box"><span>Date of Signing</span><small>DD / MM / YYYY</small></div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER ALL
+   ═══════════════════════════════════════════════════════════════ */
+function renderForm() {
+  document.getElementById('formBody').innerHTML =
+    renderSection1()  +
+    renderSection2()  +
+    renderSection3()  +
+    renderSection4()  +
+    renderSection5()  +
+    renderSection6()  +
+    renderSection7()  +
+    renderSection8()  +
+    renderSection9()  +
+    renderSection10() +
+    renderSection11() +
+    renderSection12() +
+    renderSection13() +
+    renderSignature();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FORM ASSISTANT
+   ═══════════════════════════════════════════════════════════════ */
+class FormAssistant {
+  static toggleSpeak(btn) {
+    if (!window.speechSynthesis) { FormAssistant.toast('Speech synthesis not supported.'); return; }
+    const was = btn.classList.contains('speaking');
+    window.speechSynthesis.cancel();
+    document.querySelectorAll('.audio-btn.speaking').forEach(b=>b.classList.remove('speaking'));
+    if (was) return;
+    const el = btn.closest('.field-wrapper')?.querySelector('.inst-text');
+    if (!el) return;
+    const utt = new SpeechSynthesisUtterance(el.textContent.trim());
+    utt.lang='en-IN'; utt.rate=0.92; utt.pitch=1.0;
+    btn.classList.add('speaking');
+    utt.onend = utt.onerror = () => btn.classList.remove('speaking');
+    window.speechSynthesis.speak(utt);
+  }
+  static toast(msg, dur=3600) {
+    const c=document.getElementById('toastContainer'); if(!c)return;
+    const t=document.createElement('div'); t.className='toast'; t.textContent=msg; c.appendChild(t);
+    setTimeout(()=>{t.style.cssText+='opacity:0;transition:opacity .3s';setTimeout(()=>t.remove(),320);},dur);
+  }
+}
+window.FormAssistant = FormAssistant;
+
+/* ═══════════════════════════════════════════════════════════════
+   UID AUTO-FORMAT
+   ═══════════════════════════════════════════════════════════════ */
+function setupUIDInput() {
+  const uid = document.getElementById('field-aadhaar');
+  if (!uid) return;
+  uid.addEventListener('input', function() {
+    const raw = this.value.replace(/\D/g,'').slice(0,12);
+    this.value = raw.replace(/(\d{4})(?=\d)/g,'$1 ');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FIELD INTERACTIONS
+   ═══════════════════════════════════════════════════════════════ */
+function setupFieldInteractions() {
+  const wrappers = document.querySelectorAll('.field-wrapper');
+  wrappers.forEach(w => {
+    w.addEventListener('click', e => {
+      const was = w.classList.contains('is-active');
+      wrappers.forEach(x=>x.classList.remove('is-active'));
+      if (!was || e.target.closest('input,select,textarea,button')) w.classList.add('is-active');
+    });
+    w.querySelectorAll('input,select,textarea').forEach(inp => {
+      inp.addEventListener('focus', () => { wrappers.forEach(x=>x.classList.remove('is-active')); w.classList.add('is-active'); });
+    });
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.field-wrapper')) wrappers.forEach(w=>w.classList.remove('is-active'));
+  });
+
+  // Radio pill highlights
+  document.querySelectorAll('.pill-item input[type="radio"]').forEach(rb => {
+    rb.addEventListener('change', function() {
+      const name = this.name;
+      document.querySelectorAll(`input[name="${name}"]`).forEach(r=>r.closest('.pill-item').classList.remove('checked'));
+      if (this.checked) this.closest('.pill-item').classList.add('checked');
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS
+   ═══════════════════════════════════════════════════════════════ */
+function updateProgress() {
+  const inputs = document.querySelectorAll('.form-input, .form-select, .uid-full-input');
+  let total=0, filled=0;
+  inputs.forEach(inp => {
+    const w=inp.closest('.field-wrapper');
+    if (w && w.dataset.optional==='true') return;
+    total++;
+    if (inp.value && inp.value.trim()) filled++;
+  });
+  const pct = total ? Math.round(filled/total*100) : 0;
+  const fill=document.getElementById('progressFill');
+  const pctEl=document.getElementById('progressPct');
+  if(fill) fill.style.width=pct+'%';
+  if(pctEl) pctEl.textContent=pct+'%';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  renderForm();
+  setupUIDInput();
+  setupFieldInteractions();
+  updateProgress();
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (!confirm('Reset all manually entered fields? Auto-filled values will be preserved.')) return;
+    document.querySelectorAll('.field-wrapper.is-empty .form-input, .field-wrapper.is-empty .form-select, .field-wrapper.is-empty .uid-full-input').forEach(i=>{ i.value=''; });
+    updateProgress();
+    FormAssistant.toast('Empty fields have been reset.');
+  });
+
+  document.addEventListener('input',  updateProgress);
+  document.addEventListener('change', updateProgress);
+});
+</script>
+</body>
+</html>

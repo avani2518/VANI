@@ -1,0 +1,31 @@
+Extract structured data from the OCR text of multiple identity documents.
+
+For EACH document section below, extract only the fields relevant to that document type.
+DO NOT guess values. Keep OCR values as-is. Return STRICT JSON only.
+
+Output format:
+{
+  "aadhaar": {
+    "name": "", "dob": "", "gender": "", "aadhaarNumber": "", "address": ""
+  },
+  "pan": {
+    "name": "", "dob": "", "panNumber": ""
+  },
+  "driving_license": {
+    "name": "", "dob": "", "licenseNumber": "", "address": "", "issueDate": "", "expiryDate": ""
+  },
+  "passport": {
+    "name": "", "dob": "", "gender": "", "passportNumber": "", "nationality": "",
+    "placeOfBirth": "", "issueDate": "", "expiryDate": ""
+  }
+}
+
+Rules:
+- Only include keys for documents present in the input
+- Only include fields relevant to each document type
+- Omit fields with no value found
+- No empty string fields
+- Return only the JSON object, no explanation
+
+DOCUMENTS:
+{documents_section}

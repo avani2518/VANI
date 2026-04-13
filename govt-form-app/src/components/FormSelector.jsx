@@ -1,12 +1,12 @@
 const ICONS = {
   passport_application: "🛂",
-  pan_application:      "🪪",
+  aadhar_update_application:      "🪪",
   voter_id:             "🗳️",
 };
 
 const TAGS = {
   passport_application: "MEA",
-  pan_application:      "CBDT",
+  aadhar_update_application:      "CBDT",
   voter_id:             "ECI",
 };
 

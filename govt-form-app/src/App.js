@@ -6,9 +6,7 @@ import FormSelector from "./components/FormSelector";
 import Checklist from "./components/Checklist";
 import DocumentUpload from "./components/DocumentUpload";
 import SuccessScreen from "./components/SuccessScreen";
-import JSZip from "jszip";
 import FilledForm from "./components/FilledForm";
-import { saveAs } from "file-saver";
 
 
 function Sidebar() {
@@ -87,93 +85,52 @@ function Sidebar() {
   );
 }
 
-// ─── Helper: convert File to base64 ───────────────────────────────────────────
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(",")[1]);
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
-  });
+// ─── Loading overlay (indeterminate — shown while API is processing) ──────────
+function LoadingOverlay() {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 9999, flexDirection: "column", gap: "1.5rem",
+    }}>
+      <div style={{
+        background: "#fff", borderRadius: "16px", padding: "2.5rem 3rem",
+        maxWidth: "420px", width: "90%", textAlign: "center",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+      }}>
+        <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>⏳</div>
+        <h3 style={{ margin: "0 0 0.5rem", color: "#1a3a5c", fontSize: "1.2rem" }}>
+          Extracting Document Information
+        </h3>
+        <p style={{ margin: "0 0 1.5rem", color: "#555", fontSize: "0.9rem" }}>
+          Our AI is reading your documents. This can take 1–2 minutes — please keep this tab open.
+        </p>
+        <div style={{
+          background: "#e8edf2", borderRadius: "999px", height: "10px",
+          overflow: "hidden", marginBottom: "0.75rem",
+        }}>
+          <div style={{
+            background: "linear-gradient(90deg, #1565c0, #42a5f5)",
+            height: "100%", borderRadius: "999px",
+            animation: "indeterminate 1.8s ease-in-out infinite",
+          }} />
+        </div>
+        <p style={{ margin: 0, color: "#888", fontSize: "0.8rem" }}>
+          Do not close or refresh this page
+        </p>
+      </div>
+      <style>{`
+        @keyframes indeterminate {
+          0%   { transform: translateX(-100%); width: 40%; }
+          50%  { width: 60%; }
+          100% { transform: translateX(300%); width: 40%; }
+        }
+      `}</style>
+    </div>
+  );
 }
 
-// ─── Helper: extract document info via Claude API ─────────────────────────────
-async function extractDocumentInfo(documentId, file) {
-  const base64Data = await fileToBase64(file);
-
-  // Determine media type
-  let mediaType = file.type;
-  if (!["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"].includes(mediaType)) {
-    mediaType = "image/jpeg"; // fallback
-  }
-
-  const isPdf = mediaType === "application/pdf";
-
-  const contentBlock = isPdf
-    ? {
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: base64Data },
-      }
-    : {
-        type: "image",
-        source: { type: "base64", media_type: mediaType, data: base64Data },
-      };
-
-  const prompt = `You are a government document OCR system. Extract ALL important information from this ${documentId} document.
-
-Return ONLY a valid JSON object (no markdown, no backticks, no explanation) with every field you can read from the document. 
-
-Examples of fields to extract depending on document type:
-- Aadhaar: name, date_of_birth, gender, aadhaar_number, address, vid (if visible)
-- PAN: name, father_name, date_of_birth, pan_number
-- Driving License: name, date_of_birth, license_number, valid_from, valid_until, vehicle_classes, address, blood_group, issuing_authority
-- Passport: surname, given_names, nationality, date_of_birth, sex, place_of_birth, date_of_issue, date_of_expiry, passport_number, place_of_issue, mrz_line1, mrz_line2
-- For any other document: extract every field you can find
-
-Extract ALL readable text fields. Do not skip any. If a field is partially visible, include what you can read with a note.`;
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      messages: [
-        {
-          role: "user",
-          content: [
-            contentBlock,
-            { type: "text", text: prompt },
-          ],
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const rawText = data.content
-    .filter((b) => b.type === "text")
-    .map((b) => b.text)
-    .join("");
-
-  // Strip markdown fences if present
-  const cleaned = rawText.replace(/```json|```/g, "").trim();
-
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    // If JSON parse fails, return the raw text under a key
-    return { raw_extracted_text: cleaned };
-  }
-}
-
-// ─── Extraction loading overlay ───────────────────────────────────────────────
+// ─── Extraction loading overlay (used for per-doc Claude extraction) ──────────
 function ExtractionOverlay({ progress, total, currentDoc }) {
   const pct = total > 0 ? Math.round((progress / total) * 100) : 0;
   return (
@@ -193,8 +150,6 @@ function ExtractionOverlay({ progress, total, currentDoc }) {
         <p style={{ margin: "0 0 1.5rem", color: "#555", fontSize: "0.9rem" }}>
           Reading: <strong>{currentDoc}</strong>
         </p>
-
-        {/* Progress bar */}
         <div style={{
           background: "#e8edf2", borderRadius: "999px", height: "10px",
           overflow: "hidden", marginBottom: "0.75rem",
@@ -222,6 +177,8 @@ export default function App() {
   const [extracting, setExtracting] = useState(false);
   const [extractProgress, setExtractProgress] = useState(0);
   const [extractCurrentDoc, setExtractCurrentDoc] = useState("");
+  const [apiResponse, setApiResponse] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);   // ← new
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
@@ -241,28 +198,54 @@ export default function App() {
     setStep("checklist");
   };
 
+  const handleProceed = async () => {
+    const formTypeMap = {
+      aadhaar:  "aadhaar_form",
+      passport: "passport_form",
+      voter:    "voter_id_form",
+    };
 
-const handleProceed = async () => {
-  try {
-    const zip = new JSZip();
+    const docFieldMap = {
+      aadhaar:  "aadhaarFile",
+      passport: "passportFile",
+      dl:       "dlFile",
+      pan:      "panFile",
+    };
 
-    Object.entries(uploadedDocs).forEach(([docType, file]) => {
-      zip.file(`${docType}_${file.name}`, file);
-    });
+    try {
+      setIsLoading(true);
 
-    const content = await zip.generateAsync({ type: "blob" });
+      const formType = formTypeMap[selectedForm.id];
+      const formData = new FormData();
+      formData.append("formType", formType);
 
-    saveAs(content, "uploaded_documents.zip");
+      Object.entries(uploadedDocs).forEach(([docId, file]) => {
+        formData.append(docFieldMap[docId] ?? `${docId}File`, file);
+      });
 
-    // ✅ ADD DELAY
-    setTimeout(() => {
+      const response = await fetch("http://127.0.0.1:5000/extract-multiple", {
+        method: "POST",
+        body: formData,
+      });
+
+      // if (!response.ok) throw new Error(`API error: ${response.status}`);
+      if (!response.ok) {
+        const errBody = await response.text();
+        console.error("Response status:", response.status, "Body:", errBody);
+        throw new Error(`API error: ${response.status} — ${errBody}`);
+      }
+
+      const data = await response.json();
+      setApiResponse(data);
       setStep("filled");
-    }, 500);
 
-  } catch (error) {
-    console.error("Error saving files:", error);
-  }
-};
+    } catch (error) {
+      console.error("Error calling API:", error);
+      alert("Failed to submit documents. Is the Flask server running on port 5000?");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const allUploaded = selectedForm && selectedForm.documents.every((d) => uploadedDocs[d.id]);
 
@@ -276,16 +259,17 @@ const handleProceed = async () => {
     if (step === "upload") return (
       <DocumentUpload doc={activeDoc} onUpload={handleUpload} onBack={() => setStep("checklist")} />
     );
-    if (step === "filled") return <FilledForm />;
+    if (step === "filled") return <FilledForm formType={selectedForm?.id} apiData={apiResponse} />;
     if (step === "success") return <SuccessScreen />;
   };
 
   const heroTitles = {
-    start: { h: "Digital Document Submission Portal", p: "Apply for official government forms online. Fast, secure, and paperless." },
-    select: { h: "Select Your Application Form", p: "Choose the appropriate form from the list of available government schemes." },
+    start:     { h: "Digital Document Submission Portal",   p: "Apply for official government forms online. Fast, secure, and paperless." },
+    select:    { h: "Select Your Application Form",         p: "Choose the appropriate form from the list of available government schemes." },
     checklist: { h: selectedForm?.name || "Document Checklist", p: "Upload all required identity documents to proceed with your application." },
-    upload: { h: `Upload: ${activeDoc?.label || "Document"}`, p: "Please ensure the document is clearly visible and within the file size limit." },
-    success: { h: "Application Submitted", p: "Your documents have been successfully received by our system." },
+    upload:    { h: `Upload: ${activeDoc?.label || "Document"}`, p: "Please ensure the document is clearly visible and within the file size limit." },
+    success:   { h: "Application Submitted",                p: "Your documents have been successfully received by our system." },
+    filled: { h: "Your Form is Ready", p: "Review the extracted information below." },
   };
 
   const hero = heroTitles[step] || heroTitles.start;
@@ -293,7 +277,10 @@ const handleProceed = async () => {
   return (
     <div className="portal">
 
-      {/* Extraction overlay */}
+      {/* Indeterminate loading overlay — shown while Flask API is processing */}
+      {isLoading && <LoadingOverlay />}
+
+      {/* Per-doc extraction overlay — shown during Claude extraction if used */}
       {extracting && (
         <ExtractionOverlay
           progress={extractProgress}
