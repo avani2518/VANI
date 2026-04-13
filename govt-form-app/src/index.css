@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/*
+url(components) url(components/Checklist.jsx) url(components/DocumentUpload.jsx) url(components/FormSelector.jsx) url(components/StartScreen.jsx) url(components/SuccessScreen.jsx) url(data) url(data/forms.js) url(App.css) url(App.js) url(App.test.js) url(index.css) url(index.js) url(logo.svg) url(reportWebVitals.js) url(setupTests.js)
+*/
