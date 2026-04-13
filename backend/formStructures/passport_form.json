@@ -1,0 +1,33 @@
+{
+  "form_title": "GOVERNMENT OF INDIA - PASSPORT APPLICATION FORM",
+  "office_use_only": {
+    "file_no": "$"
+  },
+    "full_name": {
+      "first_name": "$",
+      "middle_name": "$",
+      "surname": "$"
+    },
+    "gender": {
+      "male": "$",
+      "female": "$",
+      "transgender": "$"
+    },
+    "date_of_birth": "$",
+    "father_name": {
+      "father's_first_name": "$",
+      "father's_middle_name": "$",
+      "father's_surname": "$"
+    },
+  "mobile_number": "$",
+  "email_id": "$",
+  "aadhar_number_uid": "$",
+  "full_address": {
+    "house_no_or_building_or_apartment": "$",
+    "street_area_locality": "$",
+    "village_town_city": "$",
+    "post_office": "$",
+    "district": "$",
+    "pincode": "$"
+  }
+}

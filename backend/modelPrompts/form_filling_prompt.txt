@@ -65,13 +65,7 @@ SPECIAL HANDLING:
      state: Maharashtra
      pincode: 411001
 
-8. Documents submitted:
-
-   * Infer document type from available data
-   * Example:
-     If Aadhaar present → proof_of_identity = "Aadhaar"
-     If address present → proof_of_address = "Aadhaar"
-     If DOB present → proof_of_dob = "Aadhaar/PAN/Passport" (based on source)
+8. Output should only contain filled form json. No extra explanations or comments required.
 
 9. update_type:
 

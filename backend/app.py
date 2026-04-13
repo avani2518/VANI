@@ -22,11 +22,17 @@ app = Flask(__name__)
 ocr = RapidOCR()
 
 # Load API Key
-API_KEY = os.getenv("NVIDIA_API_KEY")
+API_KEY_OCR = os.getenv("NVIDIA_API_KEY_OCR")
+API_KEY_FORM = os.getenv("NVIDIA_API_KEY_FORM")
 
-client = OpenAI(
+client_ocr = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
-    api_key=API_KEY
+    api_key=API_KEY_OCR
+)
+
+client_form = OpenAI(
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=API_KEY_FORM
 )
 
 PROMPT_PATH = "modelPrompts/extraction_prompt.txt"
@@ -96,7 +102,7 @@ def call_model(ocr_text, doc_type):
     # Load prompt with variables
     prompt = load_prompt(PROMPT_PATH, ocr_text, doc_type)
 
-    completion = client.chat.completions.create(
+    completion = client_ocr.chat.completions.create(
         model="deepseek-ai/deepseek-v3.1-terminus",  # model
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,  # reduce hallucination
@@ -181,7 +187,7 @@ def fill_form(extracted_data, form_type):
 
     prompt = build_form_filling_prompt(form_structure, extracted_data)
 
-    completion = client.chat.completions.create(
+    completion = client_form.chat.completions.create(
         model="deepseek-ai/deepseek-v3.1-terminus",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,
@@ -248,7 +254,8 @@ def extract_multiple():
         # })
 
         # Call form filling
-        form_type = "aadhaar_form"  # or get dynamically from frontend later
+        # form_type = "aadhaar_form"
+        form_type = request.form.get("formType")
 
         filled_form = fill_form(
             {

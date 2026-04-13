@@ -1,0 +1,46 @@
+{
+  "form_title": "Election Commission of India - Form-6",
+  "applicant_name": {
+    "first_name_middle_name": "$",
+    "surname": "$"
+  },
+  "relative_details": {
+    "relation_type": {
+      "father": "$",
+      "mother": "$",
+      "husband": "$",
+      "wife": "$",
+      "legal_guardian": "$"
+    },
+    "relative_name": "$"
+  },
+  "mobile_no": "$",
+  "email_id": "$",
+  "aadhaar_number": "$",
+  "personal_details": {
+    "gender": {
+      "male": "$",
+      "female": "$",
+      "third_gender": "$"
+    },
+    "date_of_birth": "$",
+    "proof_of_dob": {
+      "birth_certificate": "$",
+      "aadhaar_card": "$",
+      "pan_card": "$",
+      "driving_license": "$",
+      "class_10_12_certificate": "$",
+      "indian_passport": "$",
+      "other_document": "$"
+    }
+  },
+  "address_details": {
+    "house_building_apartment_no": "$",
+    "town_village": "$",
+    "district": "$",
+    "post_office": "$",
+    "tehsil_taluka_mandal": "$",
+    "pin_code": "$",
+    "state_ut": "$"
+  }
+}
