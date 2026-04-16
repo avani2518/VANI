@@ -189,12 +189,13 @@ def fill_form(extracted_data, form_type):
         form_structure = json.load(f)
 
     prompt = build_form_filling_prompt(form_structure, extracted_data)
+    print("\n--- FORM FILLING PROMPT ---\n", prompt, "\n")
 
     completion = client_form.chat.completions.create(
         model="deepseek-ai/deepseek-v3.1-terminus",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,
-        max_tokens=4096,
+        max_tokens=1024,
         extra_body={"chat_template_kwargs": {"thinking": False}},
         stream=True
     )
@@ -224,6 +225,8 @@ def fill_form(extracted_data, form_type):
 def call_model_combined(ocr_texts_by_type: dict):
     prompt = build_combined_extraction_prompt(ocr_texts_by_type)
 
+    print("\n--- COMBINED EXTRACTION PROMPT ---\n", prompt, "\n")
+
     completion = client_ocr.chat.completions.create(
         model="deepseek-ai/deepseek-v3.1-terminus",
         messages=[{"role": "user", "content": prompt}],
@@ -243,6 +246,8 @@ def call_model_combined(ocr_texts_by_type: dict):
             output += delta.content
 
     output = output.strip().replace("```json", "").replace("```", "").strip()
+
+    print("finished model call number 1, parsing output...")
 
     try:
         return json.loads(output)
