@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import FormFrame from "./FormFrame";
 
-export default function AadhaarFormPage({ apiData }) {
+export default function AadhaarFormPage({ apiData, onEndSession }) {
   const [html, setHtml] = useState("");
-  const [css, setCss] = useState("");
+  const [css, setCss]   = useState("");
 
   useEffect(() => {
     fetch("/form-templates/aadhaar-form.html").then(r => r.text()).then(setHtml);
@@ -11,5 +11,5 @@ export default function AadhaarFormPage({ apiData }) {
   }, []);
 
   if (!html || !css) return <div style={{ padding: "2rem", textAlign: "center" }}>Loading form...</div>;
-  return <FormFrame htmlTemplate={html} apiData={apiData} formBaseCss={css} />;
+  return <FormFrame htmlTemplate={html} apiData={apiData} formBaseCss={css} onEndSession={onEndSession} />;
 }

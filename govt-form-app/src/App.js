@@ -259,7 +259,9 @@ export default function App() {
     if (step === "upload") return (
       <DocumentUpload doc={activeDoc} onUpload={handleUpload} onBack={() => setStep("checklist")} />
     );
-    if (step === "filled") return <FilledForm formType={selectedForm?.id} apiData={apiResponse} />;
+    //if (step === "filled") return <FilledForm formType={selectedForm?.id} apiData={apiResponse} />;
+    if (step === "filled") return <FilledForm formType={selectedForm?.id} apiData={apiResponse} onEndSession={() => setStep("start")} />;
+
     if (step === "success") return <SuccessScreen />;
   };
 
