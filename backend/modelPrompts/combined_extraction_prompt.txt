@@ -1,31 +1,35 @@
-Extract structured data from the OCR text of multiple identity documents.
-
-For EACH document section below, extract only the fields relevant to that document type.
-DO NOT guess values. Keep OCR values as-is. Return STRICT JSON only.
-
-Output format:
-{
-  "aadhaar": {
-    "name": "", "dob": "", "gender": "", "aadhaarNumber": "", "address": ""
-  },
-  "pan": {
-    "name": "", "dob": "", "panNumber": ""
-  },
-  "driving_license": {
-    "name": "", "dob": "", "licenseNumber": "", "address": "", "issueDate": "", "expiryDate": ""
-  },
-  "passport": {
-    "name": "", "dob": "", "gender": "", "passportNumber": "", "nationality": "",
-    "placeOfBirth": "", "issueDate": "", "expiryDate": ""
-  }
-}
+Clean and structure the given OCR text into JSON.
 
 Rules:
-- Only include keys for documents present in the input
-- Only include fields relevant to each document type
-- Omit fields with no value found
-- No empty string fields
-- Return only the JSON object, no explanation
+- Extract only clearly identifiable fields
+- Fix OCR errors (spacing, merged words, broken text)
+- Normalize:
+  - Names → proper spacing and capitalization
+  - Dates → DD/MM/YYYY
+  - Addresses → readable format
+- Remove noise, garbage text, and irrelevant content
+- Do NOT guess missing values
+- If a field is unclear → return "$"
+- Output MUST be strictly valid JSON
+- No trailing commas, no markdown
 
-DOCUMENTS:
+Expected fields (if present):
+- name
+- dob
+- gender
+- id_number (aadhaar/pan/passport/dl)
+- father_name
+- address
+
+Return JSON in this format:
+{
+  "aadhaar": {...},
+  "pan": {...},
+  "driving_license": {...},
+  "passport": {...}
+}
+
+INPUT:
 {documents_section}
+
+OUTPUT:

@@ -6,7 +6,10 @@ Rules:
 - If conflict → "$"
 - Priority: Aadhaar > Passport > Driving License > PAN
 - Keep exact JSON structure
-- No extra text, only valid JSON
+- Output MUST be strictly valid JSON
+- Do NOT add trailing commas
+- Do NOT add comments or explanations
+- Do NOT wrap in markdown (no ```)
 
 Allowed:
 - Split address into fields if clear
@@ -14,6 +17,10 @@ Allowed:
 
 update_type:
 - "yes" if field exists in data, else "$"
+
+IMPORTANT:
+- Ensure JSON is parseable using standard JSON parsers
+- Every object and array must follow strict JSON syntax
 
 INPUT:
 FORM:

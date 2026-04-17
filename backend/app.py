@@ -5,6 +5,8 @@ from PIL import Image
 import io
 import os
 import json
+import requests
+import re
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -181,9 +183,8 @@ def clean_ocr_for_model(text):
     text = " ".join(text.split())
     return text
 
-
 def fill_form(extracted_data, form_type):
-    
+
     # Load form structure 
     with open(f"formStructures/{form_type}.json", "r") as f:
         form_structure = json.load(f)
@@ -191,27 +192,58 @@ def fill_form(extracted_data, form_type):
     prompt = build_form_filling_prompt(form_structure, extracted_data)
     print("\n--- FORM FILLING PROMPT ---\n", prompt, "\n")
 
-    completion = client_form.chat.completions.create(
-        model="deepseek-ai/deepseek-v3.1-terminus",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        max_tokens=1024,
-        extra_body={"chat_template_kwargs": {"thinking": False}},
-        stream=True
-    )
+    invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+    stream = False
+
+    headers = {
+        "Authorization": "Bearer " + API_KEY_FORM,
+        "Accept": "text/event-stream" if stream else "application/json"
+    }
+
+    payload = {
+        "model": "google/gemma-3-27b-it",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 1024,
+        "temperature": 0.2,
+        "top_p": 0.7,
+        "stream": stream
+    }
+
+    response = requests.post(invoke_url, headers=headers, json=payload)
 
     output = ""
 
-    for chunk in completion:
-        if not getattr(chunk, "choices", None):
-            continue
+    if stream:
+        for line in response.iter_lines():
+            if line:
+                decoded = line.decode("utf-8")
 
-        delta = chunk.choices[0].delta
-        if delta and delta.content:
-            output += delta.content
+                # Skip SSE prefix
+                if decoded.startswith("data: "):
+                    decoded = decoded[len("data: "):]
 
+                if decoded == "[DONE]":
+                    break
+
+                try:
+                    data = json.loads(decoded)
+                    delta = data["choices"][0]["delta"]
+
+                    if "content" in delta:
+                        output += delta["content"]
+
+                except:
+                    continue
+    else:
+        result = response.json()
+        output = result["choices"][0]["message"]["content"]
+
+    print(output)
+    # Clean output
     output = output.strip()
     output = output.replace("```json", "").replace("```", "").strip()
+    output = re.sub(r",\s*}", "}", output)
+    output = re.sub(r",\s*]", "]", output)
 
     try:
         return json.loads(output)
@@ -220,40 +252,142 @@ def fill_form(extracted_data, form_type):
             "error": "JSON parse failed",
             "raw_output": output
         }
-
+    
 
 def call_model_combined(ocr_texts_by_type: dict):
+
     prompt = build_combined_extraction_prompt(ocr_texts_by_type)
 
     print("\n--- COMBINED EXTRACTION PROMPT ---\n", prompt, "\n")
 
-    completion = client_ocr.chat.completions.create(
-        model="deepseek-ai/deepseek-v3.1-terminus",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        top_p=0.7,
-        max_tokens=2048,
-        extra_body={"chat_template_kwargs": {"thinking": False}},
-        stream=True
-    )
+    invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
 
-    output = ""
-    for chunk in completion:
-        if not getattr(chunk, "choices", None):
-            continue
-        delta = chunk.choices[0].delta
-        if delta and delta.content:
-            output += delta.content
+    headers = {
+        "Authorization": "Bearer " + API_KEY_FORM,
+        "Content-Type": "application/json"
+    }
 
-    output = output.strip().replace("```json", "").replace("```", "").strip()
+    payload = {
+        "model": "google/gemma-3-27b-it",
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.2,   
+        "top_p": 0.7,
+        "max_tokens": 1024,
+        "stream": False  
+    }
 
-    print("finished model call number 1, parsing output...")
+    response = requests.post(invoke_url, headers=headers, json=payload)
+
+    if response.status_code != 200:
+        return {
+            "error": "Model API failed",
+            "status": response.status_code,
+            "body": response.text
+        }
+
+    result = response.json()
+
+    try:
+        output = result["choices"][0]["message"]["content"]
+    except:
+        return {
+            "error": "Invalid API response format",
+            "raw_response": result
+        }
+
+    # 🔧 Clean output
+    output = output.strip()
+    output = output.replace("```json", "").replace("```", "").strip()
+
+    # 🔥 Fix common JSON issues (VERY IMPORTANT)
+    output = re.sub(r",\s*}", "}", output)
+    output = re.sub(r",\s*]", "]", output)
+
+    print("finished model call (OCR cleaning), parsing output...")
 
     try:
         return json.loads(output)
     except Exception as e:
         print("\n--- RAW MODEL OUTPUT ---\n", output, "\n")
-        return {"error": "JSON parse failed", "raw_output": output}
+        return {
+            "error": "JSON parse failed",
+            "raw_output": output
+        }
+
+# def fill_form(extracted_data, form_type):
+    
+#     # Load form structure 
+#     with open(f"formStructures/{form_type}.json", "r") as f:
+#         form_structure = json.load(f)
+
+#     prompt = build_form_filling_prompt(form_structure, extracted_data)
+#     print("\n--- FORM FILLING PROMPT ---\n", prompt, "\n")
+
+#     completion = client_form.chat.completions.create(
+#         model="deepseek-ai/deepseek-v3.1-terminus",
+#         messages=[{"role": "user", "content": prompt}],
+#         temperature=0.0,
+#         max_tokens=1024,
+#         extra_body={"chat_template_kwargs": {"thinking": False}},
+#         stream=True
+#     )
+
+#     output = ""
+
+#     for chunk in completion:
+#         if not getattr(chunk, "choices", None):
+#             continue
+
+#         delta = chunk.choices[0].delta
+#         if delta and delta.content:
+#             output += delta.content
+
+#     output = output.strip()
+#     output = output.replace("```json", "").replace("```", "").strip()
+
+#     try:
+#         return json.loads(output)
+#     except:
+#         return {
+#             "error": "JSON parse failed",
+#             "raw_output": output
+#         }
+
+
+# def call_model_combined(ocr_texts_by_type: dict):
+#     prompt = build_combined_extraction_prompt(ocr_texts_by_type)
+
+#     print("\n--- COMBINED EXTRACTION PROMPT ---\n", prompt, "\n")
+
+#     completion = client_ocr.chat.completions.create(
+#         model="deepseek-ai/deepseek-v3.1-terminus",
+#         messages=[{"role": "user", "content": prompt}],
+#         temperature=0.0,
+#         top_p=0.7,
+#         max_tokens=2048,
+#         extra_body={"chat_template_kwargs": {"thinking": False}},
+#         stream=True
+#     )
+
+#     output = ""
+#     for chunk in completion:
+#         if not getattr(chunk, "choices", None):
+#             continue
+#         delta = chunk.choices[0].delta
+#         if delta and delta.content:
+#             output += delta.content
+
+#     output = output.strip().replace("```json", "").replace("```", "").strip()
+
+#     print("finished model call number 1, parsing output...")
+
+#     try:
+#         return json.loads(output)
+#     except Exception as e:
+#         print("\n--- RAW MODEL OUTPUT ---\n", output, "\n")
+#         return {"error": "JSON parse failed", "raw_output": output}
     
 
 def extract_ocr_for_file(file, doc_type):
@@ -292,6 +426,8 @@ def extract_multiple():
 
         if not ocr_texts:
             return jsonify({"error": "No valid document keys provided"}), 400
+        
+        print(ocr_texts)
 
         # Step 2: Single combined model call
         extracted_documents = call_model_combined(ocr_texts)
@@ -306,9 +442,16 @@ def extract_multiple():
             form_type
         )
 
+        if "error" in filled_form:
+            return jsonify({"error": filled_form}), 500
+
+        # return jsonify({
+        #     "status": "success",
+        #     "documents": extracted_documents,
+        #     "filled_form": filled_form
+        # })
         return jsonify({
             "status": "success",
-            "documents": extracted_documents,
             "filled_form": filled_form
         })
 
