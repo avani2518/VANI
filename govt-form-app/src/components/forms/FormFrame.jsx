@@ -87,8 +87,12 @@ export default function FormFrame({ htmlTemplate, apiData, formBaseCss, onEndSes
 
     // Match exactly: the reset button closed tag, then capture what follows
     // so we can insert End Session right after it, before the Print button.
+    // const withEndSession = withInlineCss.replace(
+    //   /(<button[^>]*id="resetBtn"[^>]*>[\s\S]*?<\/button>)(\s*)(<button[^>]*onclick="window\.print\(\)")/,
+    //   `$1$2${endSessionBtn}$2$3`
+    // );
     const withEndSession = withInlineCss.replace(
-      /(<button[^>]*id="resetBtn"[^>]*>[\s\S]*?<\/button>)(\s*)(<button[^>]*onclick="window\.print\(\)")/,
+      /(<button[^>]*id="resetBtn"[^>]*>[\s\S]*?<\/button>)(\s*)(<button[^>]*id="printBtn"[^>]*>)/,
       `$1$2${endSessionBtn}$2$3`
     );
 

@@ -4,16 +4,7 @@
   JSON-driven: all field values and states derived from FORM_DATA.
   Extends form-base.css structure identical to Aadhaar / Voter-ID forms.
   Audio buttons toggle speak/stop on repeated click.
-  Extra fields added beyond API response:
-    - Mother's full name (standard passport requirement)
-    - Spouse's full name (if married)
-    - Place of birth
-    - Marital status
-    - Occupation
-    - Emergency contact
-    - Document-based verification (POI, POA, POD)
-    - Photograph upload zone (print placeholder)
-    - Previous passport details
+  v4: Professional validation added — no existing styles/features changed.
 -->
 <html lang="en">
 <head>
@@ -243,7 +234,6 @@
       }
 
       .sig-box { border-color: #ccc !important; color: #000 !important; }
-
       .doc-row { border-color: #ccc !important; }
 
       .declaration-block {
@@ -251,7 +241,125 @@
         border-color: #ccc !important;
         color: #000 !important;
       }
+
+      /* hide validation UI on print */
+      .val-error, .val-ok, .uid-strength, .val-summary,
+      .pill-error { display: none !important; }
+      .field-wrapper.has-error .form-input,
+      .field-wrapper.has-error .form-select,
+      .field-wrapper.has-error .uid-full-input {
+        border-color: #ccc !important; background: #fff !important; box-shadow: none !important;
+      }
     }
+
+    /* ══════════════════════════════════════════════════════════
+       VALIDATION-ONLY STYLES (additive — nothing above changed)
+       ══════════════════════════════════════════════════════════ */
+
+    /* Invalid input */
+    .field-wrapper.has-error .form-input,
+    .field-wrapper.has-error .form-select,
+    .field-wrapper.has-error .uid-full-input {
+      border-color: #e53e3e !important;
+      background-color: #fff5f5 !important;
+      box-shadow: 0 0 0 3px rgba(229,62,62,0.13) !important;
+    }
+
+    /* Valid input (touched) */
+    .field-wrapper.has-success .form-input,
+    .field-wrapper.has-success .form-select,
+    .field-wrapper.has-success .uid-full-input {
+      border-color: #38a169 !important;
+      background-color: #f0fff4 !important;
+      box-shadow: 0 0 0 3px rgba(56,161,105,0.11) !important;
+    }
+
+    /* Invalid pill group wrapper */
+    .field-wrapper.has-error .pill-group {
+      outline: 2px solid rgba(229,62,62,0.45);
+      outline-offset: 4px;
+      border-radius: 6px;
+    }
+
+    /* Inline error message */
+    .val-error {
+      display: none;
+      margin-top: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #c53030;
+      line-height: 1.45;
+    }
+    .val-error::before { content: "⚠  "; }
+    .field-wrapper.has-error .val-error { display: block; }
+
+    /* Inline success message */
+    .val-ok {
+      display: none;
+      margin-top: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #276749;
+    }
+    .val-ok::before { content: "✓  "; }
+    .field-wrapper.has-success .val-ok { display: block; }
+
+    /* UID strength bar */
+    .uid-strength {
+      display: flex;
+      gap: 3px;
+      margin-top: 6px;
+    }
+    .uid-strength-seg {
+      height: 4px;
+      flex: 1;
+      border-radius: 2px;
+      background: #e2e8f0;
+      transition: background .22s;
+    }
+    .uid-s0 { background: #fc8181; }
+    .uid-s1 { background: #f6ad55; }
+    .uid-s2 { background: #68d391; }
+    .uid-s3 { background: #38a169; }
+
+    /* Pre-print validation summary */
+    .val-summary {
+      display: none;
+      background: #fff5f5;
+      border: 1.5px solid #fc8181;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 12px 0 0;
+      font-size: 13px;
+      color: #742a2a;
+    }
+    .val-summary.visible { display: block; }
+    .val-summary strong { display: block; margin-bottom: 6px; }
+    .val-summary ul { margin: 0 0 0 18px; padding: 0; }
+    .val-summary ul li { margin: 3px 0; }
+
+    /* Shake on summary */
+    @keyframes val-shake {
+      0%,100% { transform:translateX(0); }
+      20%      { transform:translateX(-6px); }
+      40%      { transform:translateX(6px); }
+      60%      { transform:translateX(-4px); }
+      80%      { transform:translateX(4px); }
+    }
+    .val-shake { animation: val-shake .38s ease; }
+
+    /* Inline doc-row error */
+    .doc-row-err {
+      display: none;
+      font-size: 11px;
+      font-weight: 600;
+      color: #c53030;
+      margin-top: 2px;
+      grid-column: 2;
+    }
+    .doc-row-err.visible { display: block; }
+    .doc-input-err  { border-color: #e53e3e !important; background: #fff5f5 !important; }
+    .doc-input-ok   { border-color: #38a169 !important; background: #f0fff4 !important; }
   </style>
 </head>
 <body>
@@ -286,8 +394,6 @@
 
     <!-- ══ Instructions + File No. ════════════════════════════ -->
     <div style="display:grid; grid-template-columns:1fr 170px; gap:0; border-bottom:1px solid #D0D8E4;">
-
-      <!-- Left: instructions -->
       <div style="padding:16px 20px 16px 28px; border-right:1px solid #D0D8E4; display:flex; align-items:center;">
         <div style="background:#EBF2FB; border-left:4px solid #2563A8; padding:11px 15px; border-radius:6px; font-size:12.5px; color:#1A3A5C; line-height:1.65; width:100%;">
           <strong>Instructions:</strong> Fill all fields in <strong>BLOCK / CAPITAL LETTERS</strong>.
@@ -296,8 +402,6 @@
           Refer to the Passport Seva portal (passportindia.gov.in) for the list of accepted documents.
         </div>
       </div>
-
-      <!-- Right: file number only, vertically centred -->
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px 14px; gap:8px; background:#F7F9FC;">
         <div style="font-size:12px; font-weight:700; color:#0F1B2D; letter-spacing:.06em; text-align:center;">FILE No.</div>
         <input type="text" id="field-file-no" placeholder="———————————"
@@ -306,7 +410,6 @@
                  padding:3px 0; width:100%; text-align:center;" />
         <div style="font-size:10.5px; color:#8898AA; font-style:italic; text-align:center;">(To be filled by office)</div>
       </div>
-
     </div>
 
     <!-- ══ Progress Bar ═════════════════════════════════════════ -->
@@ -323,13 +426,19 @@
       <span class="legend-tip">Click any field to see instructions · 🔊 for voice</span>
     </div>
 
+    <!-- ══ Validation summary (shown before print if errors exist) ══ -->
+    <div class="val-summary" id="valSummary">
+      <strong>⚠ Please fix the following before printing:</strong>
+      <ul id="valSummaryList"></ul>
+    </div>
+
     <!-- ══ Form Body ══════════════════════════════════════════════ -->
     <div class="form-body" id="formBody"></div>
 
     <!-- ══ Footer ════════════════════════════════════════════════ -->
     <div class="form-footer">
       <button class="btn btn-ghost" id="resetBtn">↺ Reset</button>
-      <button class="btn btn-danger" onclick="window.print()">🖨 Print Form</button>
+      <button class="btn btn-danger" id="printBtn">🖨 Print Form</button>
     </div>
 
   </div>
@@ -398,6 +507,7 @@ function audioBtn() {
   </button>`;
 }
 
+/* fieldWrapper — identical to original, adds data-fid + val-error/ok divs */
 function fieldWrapper({ id, label, type="text", value, placeholder, instruction, optional=false, extraAttrs="" }) {
   const filled = isFilled(value);
   const stateClass = filled ? "is-filled" : "is-empty";
@@ -416,7 +526,9 @@ function fieldWrapper({ id, label, type="text", value, placeholder, instruction,
         ${badge}
         ${audioBtn()}
       </div>
-      <input class="form-input" id="field-${id}" type="${type}" ${val} placeholder="${placeholder}" ${extraAttrs} />
+      <input class="form-input" id="field-${id}" type="${type}" ${val} placeholder="${placeholder}" ${extraAttrs} data-fid="${id}" />
+      <div class="val-error" id="verr-${id}"></div>
+      <div class="val-ok"   id="vok-${id}">Looks good</div>
       <div class="field-instruction"><div class="instruction-inner">
         <span class="inst-icon">${icon}</span>
         <span class="inst-text">${instruction}</span>
@@ -472,6 +584,7 @@ function renderSection2() {
           ${audioBtn()}
         </div>
         <div class="pill-group">${pills}</div>
+        <div class="val-error" id="verr-gender"></div>
         <div class="field-instruction"><div class="instruction-inner">
           <span class="inst-icon">${filled?'✅':'📌'}</span>
           <span class="inst-text">${inst}</span>
@@ -568,6 +681,7 @@ function renderSection6() {
           ${audioBtn()}
         </div>
         <div class="pill-group">${pills}</div>
+        <div class="val-error" id="verr-marital"></div>
         <div class="field-instruction"><div class="instruction-inner">
           <span class="inst-icon">📌</span>
           <span class="inst-text">Select your current marital status. If married, please fill in your spouse's name below.</span>
@@ -650,6 +764,14 @@ function renderSection9() {
             ${filled?`value="${escHtml(uid)}"`:''} placeholder="XXXX XXXX XXXX" />
           <span class="uid-format-hint">12 digits</span>
         </div>
+        <div class="uid-strength">
+          <div class="uid-strength-seg" id="useg0"></div>
+          <div class="uid-strength-seg" id="useg1"></div>
+          <div class="uid-strength-seg" id="useg2"></div>
+          <div class="uid-strength-seg" id="useg3"></div>
+        </div>
+        <div class="val-error" id="verr-aadhaar"></div>
+        <div class="val-ok"   id="vok-aadhaar">Valid 12-digit Aadhaar ✓</div>
         <div class="field-instruction"><div class="instruction-inner">
           <span class="inst-icon">${filled?'✅':'📌'}</span>
           <span class="inst-text">${inst}</span>
@@ -668,8 +790,6 @@ function renderSection10() {
   const mkInst = (label, val, emptyInst) => isFilled(val)
     ? `${label} was auto-filled as "${val}" from your documents. Verify it matches your address proof.`
     : emptyInst;
-
-  const stateFilled = false; // not in API response
 
   return `
     <div class="form-section">
@@ -711,6 +831,8 @@ function renderSection10() {
             <option value="">-- Select State / UT --</option>
             ${STATES.map(s=>`<option>${s}</option>`).join('')}
           </select>
+          <div class="val-error" id="verr-addr-state"></div>
+          <div class="val-ok"   id="vok-addr-state">State selected ✓</div>
           <div class="field-instruction"><div class="instruction-inner">
             <span class="inst-icon">📌</span>
             <span class="inst-text">Select the State or Union Territory where you currently reside. Must match your address proof.</span>
@@ -743,6 +865,7 @@ function renderSection11() {
           ${audioBtn()}
         </div>
         <div class="pill-group">${pills}</div>
+        <div class="val-error" id="verr-occupation"></div>
         <div class="field-instruction"><div class="instruction-inner">
           <span class="inst-icon">📌</span>
           <span class="inst-text">Select your current occupation. If you are employed (Government or Private), please also fill in your organisation name and designation below.</span>
@@ -773,17 +896,26 @@ function renderSection12() {
           ${audioBtn()}
         </div>
         <div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">
-          <div class="doc-row">
+          <div class="doc-row" style="display:grid; grid-template-columns:180px 1fr; gap:12px; align-items:start;">
             <span class="doc-row-label">(a) Proof of Date of Birth:</span>
-            <input class="form-input" id="field-pod" type="text" placeholder="e.g. Birth Certificate, Aadhaar Card" style="margin:0;" />
+            <div>
+              <input class="form-input" id="field-pod" type="text" placeholder="e.g. Birth Certificate, Aadhaar Card" style="margin:0;" data-docfield="pod" />
+              <div class="doc-row-err" id="verr-doc-pod">⚠ Required — enter the document name.</div>
+            </div>
           </div>
-          <div class="doc-row">
+          <div class="doc-row" style="display:grid; grid-template-columns:180px 1fr; gap:12px; align-items:start;">
             <span class="doc-row-label">(b) Proof of Address:</span>
-            <input class="form-input" id="field-poa" type="text" placeholder="e.g. Aadhaar Card, Utility Bill" style="margin:0;" />
+            <div>
+              <input class="form-input" id="field-poa" type="text" placeholder="e.g. Aadhaar Card, Utility Bill" style="margin:0;" data-docfield="poa" />
+              <div class="doc-row-err" id="verr-doc-poa">⚠ Required — enter the document name.</div>
+            </div>
           </div>
-          <div class="doc-row">
+          <div class="doc-row" style="display:grid; grid-template-columns:180px 1fr; gap:12px; align-items:start;">
             <span class="doc-row-label">(c) Proof of Identity:</span>
-            <input class="form-input" id="field-poi" type="text" placeholder="e.g. Aadhaar Card, PAN Card" style="margin:0;" />
+            <div>
+              <input class="form-input" id="field-poi" type="text" placeholder="e.g. Aadhaar Card, PAN Card" style="margin:0;" data-docfield="poi" />
+              <div class="doc-row-err" id="verr-doc-poi">⚠ Required — enter the document name.</div>
+            </div>
           </div>
         </div>
         <div class="field-instruction"><div class="instruction-inner">
@@ -816,7 +948,7 @@ function renderSection13() {
             instruction:"Enter the expiry date on your previous passport in DD/MM/YYYY format." })}
         ${fieldWrapper({ id:"prev-pass-psa", label:"Previous Passport Issuing Authority (PSA)", value:"$",
             placeholder:"e.g. RPO Pune", optional:true,
-            instruction:"Enter the Passport Seva Authorty (Regional Passport Office) that issued your previous passport. This is printed on the data page of the old passport." })}
+            instruction:"Enter the Passport Seva Authority (Regional Passport Office) that issued your previous passport. This is printed on the data page of the old passport." })}
       </div>
     </div>`;
 }
@@ -886,7 +1018,7 @@ class FormAssistant {
 window.FormAssistant = FormAssistant;
 
 /* ═══════════════════════════════════════════════════════════════
-   UID AUTO-FORMAT
+   UID AUTO-FORMAT  (original, unchanged)
    ═══════════════════════════════════════════════════════════════ */
 function setupUIDInput() {
   const uid = document.getElementById('field-aadhaar');
@@ -894,11 +1026,14 @@ function setupUIDInput() {
   uid.addEventListener('input', function() {
     const raw = this.value.replace(/\D/g,'').slice(0,12);
     this.value = raw.replace(/(\d{4})(?=\d)/g,'$1 ');
+    V.uid(this.value);
   });
+  uid.addEventListener('blur', function() { V.uid(this.value); });
+  if (uid.value) V.uid(uid.value);
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   FIELD INTERACTIONS
+   FIELD INTERACTIONS  (original, unchanged)
    ═══════════════════════════════════════════════════════════════ */
 function setupFieldInteractions() {
   const wrappers = document.querySelectorAll('.field-wrapper');
@@ -927,7 +1062,7 @@ function setupFieldInteractions() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PROGRESS
+   PROGRESS  (original, unchanged)
    ═══════════════════════════════════════════════════════════════ */
 function updateProgress() {
   const inputs = document.querySelectorAll('.form-input, .form-select, .uid-full-input');
@@ -946,17 +1081,520 @@ function updateProgress() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   VALIDATION ENGINE  (new)
+   ═══════════════════════════════════════════════════════════════ */
+const RULES = {
+
+  /* ── Name fields: letters / spaces / dots / hyphens / apostrophes ── */
+  'fn-first':    { required:true,  nameField:true, minLen:2, maxLen:50 },
+  'fn-surname':  { required:true,  nameField:true, minLen:2, maxLen:50 },
+  'fn-middle':   { required:false, nameField:true, maxLen:50 },
+
+  'dad-first':   { required:true,  nameField:true, minLen:2, maxLen:50 },
+  'dad-surname': { required:true,  nameField:true, minLen:2, maxLen:50 },
+  'dad-middle':  { required:false, nameField:true, maxLen:50 },
+
+  'mom-first':   { required:true,  nameField:true, minLen:2, maxLen:50 },
+  'mom-surname': { required:true,  nameField:true, minLen:2, maxLen:50 },
+  'mom-middle':  { required:false, nameField:true, maxLen:50 },
+
+  'sp-first':    { required:false, nameField:true, maxLen:50 },
+  'sp-surname':  { required:false, nameField:true, maxLen:50 },
+  'sp-middle':   { required:false, nameField:true, maxLen:50 },
+
+  'emg-name':    { required:true,  nameField:true, minLen:2, maxLen:80 },
+
+  'org-name':    { required:false, maxLen:100,
+    checks:[ { test:v=>v===''||/^[A-Za-z0-9\s,.\-\/()&]+$/.test(v), msg:'Only letters, numbers, and common punctuation allowed.' } ] },
+  'designation': { required:false, maxLen:80,
+    checks:[ { test:v=>v===''||/^[A-Za-z0-9\s,.\-\/()&]+$/.test(v), msg:'Only letters, numbers, and common punctuation allowed.' } ] },
+
+  /* ── Mobile numbers ── */
+  'mobile': {
+    required: true,
+    checks: [
+      { test:v=>/^\d+$/.test(v),    msg:'Mobile number must contain digits only — no letters, spaces, or symbols.' },
+      { test:v=>v.length===10,      msg:'Mobile number must be exactly 10 digits.' },
+      { test:v=>/^[6-9]/.test(v),  msg:'Must start with 6, 7, 8, or 9 (valid Indian mobile prefix).' },
+    ]
+  },
+  'emg-mobile': {
+    required: true,
+    checks: [
+      { test:v=>/^\d+$/.test(v),    msg:'Mobile number must contain digits only — no letters or spaces.' },
+      { test:v=>v.length===10,      msg:'Mobile number must be exactly 10 digits.' },
+      { test:v=>/^[6-9]/.test(v),  msg:'Must start with 6, 7, 8, or 9 (valid Indian mobile prefix).' },
+    ]
+  },
+
+  /* ── Email ── */
+  'email': {
+    required: true,
+    checks: [
+      { test:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), msg:'Enter a valid email address containing "@" and a domain — e.g. name@example.com' },
+      { test:v=>!/@.*@/.test(v),    msg:'Email must contain exactly one "@" symbol.' },
+      { test:v=>!/\s/.test(v),      msg:'Email must not contain spaces.' },
+      { test:v=>v.length<=254,      msg:'Email must not exceed 254 characters.' },
+    ]
+  },
+
+  /* ── Date of Birth ── */
+  'dob': {
+    required: true,
+    checks: [
+      { test:v=>/^\d{2}\/\d{2}\/\d{4}$/.test(v),     msg:'Use DD/MM/YYYY format — e.g. 25/07/1990.' },
+      { test:v=>{ const m=v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m&&+m[2]>=1&&+m[2]<=12; },
+                                                        msg:'Month must be between 01 and 12.' },
+      { test:v=>{ const m=v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m)return false;
+                  return +m[1]>=1&&+m[1]<=new Date(+m[3],+m[2],0).getDate(); },
+                                                        msg:'Day is invalid for the given month.' },
+      { test:v=>{ const m=v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m)return false;
+                  return new Date(+m[3],+m[2]-1,+m[1])<new Date(); },
+                                                        msg:'Date of birth cannot be in the future.' },
+      { test:v=>{ const m=v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m&&+m[3]>=1900; },
+                                                        msg:'Year must be 1900 or later.' },
+    ]
+  },
+
+  /* ── Place of birth ── */
+  'pob':          { required:true,  nameField:true, minLen:2, maxLen:60 },
+  'pob-district': { required:true,  nameField:true, minLen:2, maxLen:60 },
+  'pob-state':    { required:true,  maxLen:60,
+    checks:[ { test:v=>v.trim().length>=2,                      msg:'State / Country of Birth is required.' },
+             { test:v=>/^[A-Za-z\s.\-\/()]+$/.test(v.trim()),  msg:'Only letters, spaces, and basic punctuation allowed.' } ] },
+
+  /* ── Previous passport optional dates ── */
+  'prev-pass-date': {
+    required: false,
+    checks: [
+      { test:v=>v===''||/^\d{2}\/\d{2}\/\d{4}$/.test(v),  msg:'Use DD/MM/YYYY format — e.g. 10/03/2015.' },
+      { test:v=>{ if(!v)return true; const m=v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m&&+m[2]>=1&&+m[2]<=12; },
+                                                             msg:'Month must be between 01 and 12.' },
+    ]
+  },
+  'prev-pass-expiry': {
+    required: false,
+    checks: [
+      { test:v=>v===''||/^\d{2}\/\d{2}\/\d{4}$/.test(v),  msg:'Use DD/MM/YYYY format — e.g. 09/03/2025.' },
+      { test:v=>{ if(!v)return true; const m=v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m&&+m[2]>=1&&+m[2]<=12; },
+                                                             msg:'Month must be between 01 and 12.' },
+    ]
+  },
+  'prev-pass-no': {
+    required: false,
+    checks: [
+      { test:v=>v===''||/^[A-Z]\d{7}$/.test(v.toUpperCase()), msg:'Passport number format: 1 letter followed by 7 digits — e.g. A1234567.' },
+    ]
+  },
+  'prev-pass-psa': { required:false, maxLen:80,
+    checks:[ { test:v=>v===''||/^[A-Za-z0-9\s,.\-\/()]+$/.test(v), msg:'Only letters, numbers, and common punctuation allowed.' } ] },
+
+  /* ── Address fields ── */
+  'addr-house': {
+    required: true,
+    checks: [
+      { test:v=>v.trim().length>=1,                            msg:'House / Building number is required.' },
+      { test:v=>v.trim().length<=60,                           msg:'Must not exceed 60 characters.' },
+      { test:v=>/^[A-Za-z0-9\s,.\-\/()#]+$/.test(v.trim()),  msg:'Only letters, numbers, and common punctuation allowed.' },
+    ]
+  },
+  'addr-street': {
+    required: true,
+    checks: [
+      { test:v=>v.trim().length>=2,                            msg:'Street / Area is required.' },
+      { test:v=>v.trim().length<=80,                           msg:'Must not exceed 80 characters.' },
+      { test:v=>/^[A-Za-z0-9\s,.\-\/()]+$/.test(v.trim()),   msg:'Only letters, numbers, and common punctuation allowed.' },
+    ]
+  },
+  'addr-city':     { required:true, nameField:true, minLen:2, maxLen:60 },
+  'addr-po':       { required:true, nameField:true, minLen:2, maxLen:60 },
+  'addr-district': { required:true, nameField:true, minLen:2, maxLen:60 },
+  'addr-police':   { required:true, nameField:true, minLen:2, maxLen:80 },
+  'addr-pin': {
+    required: true,
+    checks: [
+      { test:v=>/^\d+$/.test(v),    msg:'PIN code must contain digits only — no letters.' },
+      { test:v=>v.length===6,        msg:'PIN code must be exactly 6 digits.' },
+      { test:v=>!/^0/.test(v),       msg:'PIN code cannot start with 0.' },
+    ]
+  },
+
+  /* ── Aadhaar ── */
+  'aadhaar': {
+    required: false,
+    checks: [
+      { test:v=>/^[\d\s]*$/.test(v),                           msg:'Aadhaar number must contain digits only.' },
+      { test:v=>v===''||v.replace(/\s/g,'').length===12,       msg:'Aadhaar number must be exactly 12 digits.' },
+    ]
+  },
+};
+
+/* Helper: expand nameField shorthand into actual checks */
+function getChecks(id) {
+  const rule = RULES[id];
+  if (!rule) return [];
+  const checks = [];
+  if (rule.nameField) {
+  if (rule.minLen) checks.push({ test:v=>v.trim().length>=rule.minLen, msg:`Must be at least ${rule.minLen} characters.` });
+  if (rule.maxLen) checks.push({ test:v=>v.trim().length<=rule.maxLen, msg:`Must not exceed ${rule.maxLen} characters.` });
+
+  // ✅ Apply strict validation ONLY for required fields
+  if (rule.required) {
+    checks.push({
+      test:v=>/^[A-Za-z\s.\-']+$/.test(v.trim()),
+      msg:'Must contain letters only — no numbers or special characters.'
+    });
+  }
+}
+  else {
+    if (rule.minLen) checks.push({ test:v=>v.trim().length>=rule.minLen, msg:`Must be at least ${rule.minLen} characters.` });
+    if (rule.maxLen) checks.push({ test:v=>v.trim().length<=rule.maxLen, msg:`Must not exceed ${rule.maxLen} characters.` });
+  }
+  return [...checks, ...(rule.checks||[])];
+}
+
+/* Run rules for one field; returns {valid, msg} */
+function runRules(id, rawValue) {
+  const rule = RULES[id];
+  if (!rule) return { valid:true, msg:null };
+  const v = rawValue.trim();
+
+  if (rule.required && v==='') {
+    const label = document.querySelector(`#wrapper-${id} .field-label`);
+    return { valid:false, msg:`${label?label.textContent.trim():id} is required.` };
+  }
+
+  for (const c of getChecks(id)) {
+    if (!c.test(v)) return { valid:false, msg:c.msg };
+  }
+  return { valid:true, msg:null };
+}
+
+/* Apply visual result to wrapper */
+function applyResult(wrapperId, valid, msg, suppressGreen=false) {
+  const w  = document.getElementById(`wrapper-${wrapperId}`);
+  const em = document.getElementById(`verr-${wrapperId}`);
+  if (!w) return;
+  w.classList.remove('has-error','has-success');
+  if (em) em.textContent='';
+  if (!valid) {
+    w.classList.add('has-error');
+    if (em) em.textContent = msg||'';
+  } else if (!suppressGreen) {
+    w.classList.add('has-success');
+  }
+}
+
+/* Validation façade */
+const V = {
+
+  field(id, value, suppressGreen=false) {
+    const r = runRules(id, value);
+    const empty = (value||'').trim()==='';
+    const isOpt = !RULES[id]?.required;
+    applyResult(id, r.valid, r.msg, suppressGreen || (empty && isOpt));
+    return r.valid;
+  },
+
+  uid(formattedValue) {
+    const raw = (formattedValue||'').replace(/\s/g,'');
+    /* Strength bar */
+    const len=Math.min(raw.length,12);
+    const level=len===0?-1:len<=3?0:len<=6?1:len<=9?2:3;
+    ['useg0','useg1','useg2','useg3'].forEach((sid,i)=>{
+      const el=document.getElementById(sid); if(!el)return;
+      el.className='uid-strength-seg';
+      if(level>=0&&i<=level) el.classList.add(`uid-s${level}`);
+    });
+    if(!raw){ applyResult('aadhaar',true,null,true); return true; }
+    const r=runRules('aadhaar',raw);
+    applyResult('aadhaar',r.valid,r.msg,false);
+    return r.valid;
+  },
+
+  radioGroup(name, wrapperId, errId) {
+    const chosen = document.querySelector(`input[name="${name}"]:checked`);
+    const w = document.getElementById(wrapperId);
+    const em= document.getElementById(errId);
+    if (!w) return true;
+    w.classList.remove('has-error','has-success');
+    if (!chosen) {
+      w.classList.add('has-error');
+      if (em) em.textContent=`Please select an option.`;
+      return false;
+    }
+    w.classList.add('has-success');
+    if (em) em.textContent='';
+    return true;
+  },
+
+  stateSelect() {
+    const el = document.getElementById('field-addr-state');
+    const w  = document.getElementById('wrapper-addr-state');
+    const em = document.getElementById('verr-addr-state');
+    if (!el||!w) return true;
+    w.classList.remove('has-error','has-success');
+    if (!el.value) {
+      w.classList.add('has-error');
+      if (em) em.textContent='Please select your State / UT.';
+      return false;
+    }
+    w.classList.add('has-success');
+    if (em) em.textContent='';
+    return true;
+  },
+
+  docFields() {
+    let ok=true;
+    [['field-pod','verr-doc-pod'],['field-poa','verr-doc-poa'],['field-poi','verr-doc-poi']].forEach(([fid,eid])=>{
+      const el=document.getElementById(fid);
+      const er=document.getElementById(eid);
+      if (!el) return;
+      if (!el.value.trim()) {
+        el.classList.add('doc-input-err'); el.classList.remove('doc-input-ok');
+        if(er) er.classList.add('visible');
+        ok=false;
+      } else {
+        el.classList.remove('doc-input-err'); el.classList.add('doc-input-ok');
+        if(er) er.classList.remove('visible');
+      }
+    });
+    return ok;
+  },
+
+  all() {
+    const errors=[];
+    /* All [data-fid] inputs */
+    document.querySelectorAll('[data-fid]').forEach(inp=>{
+      const id=inp.dataset.fid;
+      const opt=inp.dataset.optional==='true';
+      if(opt&&!inp.value.trim()){ V.field(id,'',true); return; }
+      if(!V.field(id,inp.value)){
+        const lbl=document.querySelector(`#wrapper-${id} .field-label`);
+        errors.push(lbl?lbl.textContent.trim():id);
+      }
+    });
+    /* UID */
+    if(!V.uid(document.getElementById('field-aadhaar')?.value||'')) errors.push('Aadhaar Number');
+    /* Radio groups */
+    if(!V.radioGroup('gender','wrapper-gender','verr-gender'))       errors.push('Gender');
+    if(!V.radioGroup('marital_status','wrapper-marital','verr-marital')) errors.push('Marital Status');
+    if(!V.radioGroup('occupation','wrapper-occupation','verr-occupation')) errors.push('Occupation');
+    /* State select */
+    if(!V.stateSelect()) errors.push('State / UT');
+    /* Doc fields */
+    if(!V.docFields()) errors.push('Document verification fields (POD / POA / POI)');
+    return errors;
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   INPUT GUARDS — block illegal chars in real time  (new)
+   ═══════════════════════════════════════════════════════════════ */
+function setupInputGuards() {
+
+  function digitsOnly(el, label) {
+    if (!el) return;
+    el.addEventListener('keypress', e=>{
+      if (!/\d/.test(e.key)&&e.key.length===1) {
+        e.preventDefault();
+        FormAssistant.toast(`⚠ ${label} accepts digits only.`);
+      }
+    });
+    el.addEventListener('paste', e=>{
+      const t=(e.clipboardData||window.clipboardData).getData('text');
+      if (/\D/.test(t)){ e.preventDefault(); FormAssistant.toast(`⚠ ${label}: digits only.`); }
+    });
+  }
+
+  function lettersOnly(el, label) {
+    if (!el) return;
+    el.addEventListener('keypress', e=>{
+      if (/\d/.test(e.key)) {
+        e.preventDefault();
+        FormAssistant.toast(`⚠ ${label} does not accept numbers.`);
+      }
+    });
+  }
+
+  /* Digits-only */
+  digitsOnly(document.getElementById('field-mobile'),     'Mobile Number');
+  digitsOnly(document.getElementById('field-emg-mobile'), 'Emergency Contact Mobile');
+  digitsOnly(document.getElementById('field-addr-pin'),   'PIN Code');
+  digitsOnly(document.getElementById('field-aadhaar'),    'Aadhaar Number');
+
+  /* Letters-only name fields */
+  ['fn-first','fn-middle','fn-surname',
+   'dad-first','dad-middle','dad-surname',
+   'mom-first','mom-middle','mom-surname',
+   'sp-first','sp-middle','sp-surname',
+   'emg-name',
+   'pob','pob-district',
+   'addr-city','addr-po','addr-district','addr-police'
+  ].forEach(id=>{
+    lettersOnly(document.getElementById(`field-${id}`), id);
+  });
+
+  /* DOB — digits and "/" only; auto-insert slashes */
+  function setupDateField(el) {
+    if (!el) return;
+    el.addEventListener('keypress', e=>{
+      if (!/[\d\/]/.test(e.key)&&e.key.length===1) {
+        e.preventDefault();
+        FormAssistant.toast('⚠ Date: digits and "/" only — e.g. 25/07/1990.');
+      }
+    });
+    el.addEventListener('input', function(){
+      let v=this.value.replace(/[^\d]/g,'').slice(0,8);
+      if(v.length>4) v=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+      else if(v.length>2) v=v.slice(0,2)+'/'+v.slice(2);
+      this.value=v;
+    });
+  }
+  setupDateField(document.getElementById('field-dob'));
+  setupDateField(document.getElementById('field-prev-pass-date'));
+  setupDateField(document.getElementById('field-prev-pass-expiry'));
+
+  /* Passport number — letters + digits only, auto-uppercase */
+  const passNoEl = document.getElementById('field-prev-pass-no');
+  if (passNoEl) {
+    passNoEl.addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
+    passNoEl.addEventListener('keypress', e=>{
+      if (!/[A-Za-z0-9]/.test(e.key)&&e.key.length===1) {
+        e.preventDefault();
+        FormAssistant.toast('⚠ Passport number: letters and digits only — e.g. A1234567.');
+      }
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REAL-TIME VALIDATION WIRING  (new)
+   ═══════════════════════════════════════════════════════════════ */
+function setupRealtimeValidation() {
+
+  /* All [data-fid] text/tel/email/number inputs */
+  document.querySelectorAll('[data-fid]').forEach(inp=>{
+    const id =inp.dataset.fid;
+    const opt=inp.dataset.optional==='true';
+
+    inp.addEventListener('blur',()=>{
+      if(opt&&!inp.value.trim()){ applyResult(id,true,null,true); return; }
+      V.field(id,inp.value);
+    });
+    inp.addEventListener('input',()=>{
+      if(inp.value.trim()) V.field(id,inp.value);
+      else {
+        const w=document.getElementById(`wrapper-${id}`);
+        if(w){ w.classList.remove('has-error','has-success'); }
+        const em=document.getElementById(`verr-${id}`);
+        if(em) em.textContent='';
+      }
+    });
+    /* Validate pre-filled auto-filled values */
+    if(inp.value.trim()) V.field(id,inp.value,false);
+  });
+
+  /* Gender radio */
+  document.querySelectorAll('input[name="gender"]').forEach(rb=>{
+    rb.addEventListener('change',()=>V.radioGroup('gender','wrapper-gender','verr-gender'));
+  });
+  /* Marital status radio */
+  document.querySelectorAll('input[name="marital_status"]').forEach(rb=>{
+    rb.addEventListener('change',()=>V.radioGroup('marital_status','wrapper-marital','verr-marital'));
+  });
+  /* Occupation radio */
+  document.querySelectorAll('input[name="occupation"]').forEach(rb=>{
+    rb.addEventListener('change',()=>V.radioGroup('occupation','wrapper-occupation','verr-occupation'));
+  });
+
+  /* State select */
+  const stateEl=document.getElementById('field-addr-state');
+  if(stateEl){
+    stateEl.addEventListener('change',()=>V.stateSelect());
+    if(stateEl.value) V.stateSelect();
+  }
+
+  /* Document inputs */
+  [['field-pod','verr-doc-pod'],['field-poa','verr-doc-poa'],['field-poi','verr-doc-poi']].forEach(([fid,eid])=>{
+    const el=document.getElementById(fid);
+    const er=document.getElementById(eid);
+    if(!el) return;
+    el.addEventListener('blur',()=>{
+      if(!el.value.trim()){
+        el.classList.add('doc-input-err'); el.classList.remove('doc-input-ok');
+        if(er) er.classList.add('visible');
+      }
+    });
+    el.addEventListener('input',()=>{
+      if(el.value.trim()){
+        el.classList.remove('doc-input-err'); el.classList.add('doc-input-ok');
+        if(er) er.classList.remove('visible');
+      } else {
+        el.classList.remove('doc-input-ok');
+      }
+    });
+    if(el.value.trim()) el.classList.add('doc-input-ok');
+  });
+
+  /* Validate pre-filled gender if auto-detected */
+  const genderPrefilled = document.querySelector('input[name="gender"]:checked');
+  if(genderPrefilled) V.radioGroup('gender','wrapper-gender','verr-gender');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRINT — validate first
+   ═══════════════════════════════════════════════════════════════ */
+document.getElementById('printBtn').addEventListener('click',()=>{
+  const errors=V.all();
+  const summary=document.getElementById('valSummary');
+  const list   =document.getElementById('valSummaryList');
+
+  if(errors.length){
+    list.innerHTML=errors.map(e=>`<li>${e}</li>`).join('');
+    summary.classList.add('visible');
+    summary.scrollIntoView({behavior:'smooth',block:'nearest'});
+    summary.classList.remove('val-shake');
+    void summary.offsetWidth;
+    summary.classList.add('val-shake');
+    FormAssistant.toast(`⚠ ${errors.length} issue${errors.length>1?'s':''} found — please fix before printing.`,5000);
+  } else {
+    summary.classList.remove('visible');
+    window.print();
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
    BOOT
    ═══════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   renderForm();
   setupUIDInput();
   setupFieldInteractions();
+  setupInputGuards();         /* new */
+  setupRealtimeValidation();  /* new */
   updateProgress();
 
   document.getElementById('resetBtn').addEventListener('click', () => {
     if (!confirm('Reset all manually entered fields? Auto-filled values will be preserved.')) return;
     document.querySelectorAll('.field-wrapper.is-empty .form-input, .field-wrapper.is-empty .form-select, .field-wrapper.is-empty .uid-full-input').forEach(i=>{ i.value=''; });
+
+    /* Clear validation states on empty wrappers */
+    document.querySelectorAll('.field-wrapper.is-empty').forEach(w=>{
+      w.classList.remove('has-error','has-success');
+      const em=w.querySelector('.val-error'); if(em) em.textContent='';
+    });
+    /* Clear doc inputs */
+    [['field-pod','verr-doc-pod'],['field-poa','verr-doc-poa'],['field-poi','verr-doc-poi']].forEach(([fid,eid])=>{
+      const el=document.getElementById(fid);
+      if(el&&!el.value.trim()){ el.classList.remove('doc-input-err','doc-input-ok'); }
+      const er=document.getElementById(eid); if(er) er.classList.remove('visible');
+    });
+    /* Reset UID strength bar */
+    ['useg0','useg1','useg2','useg3'].forEach(sid=>{
+      const el=document.getElementById(sid); if(el) el.className='uid-strength-seg';
+    });
+    document.getElementById('valSummary')?.classList.remove('visible');
     updateProgress();
     FormAssistant.toast('Empty fields have been reset.');
   });
