@@ -52,20 +52,46 @@ export default function Checklist({ form, uploadedDocs, onDocClick, onProceed, a
         <div className="divider" />
 
         <ul className="checklist">
-          {form.documents.map((doc) => {
-            const isDone = !!uploadedDocs[doc.id];
-            return (
-              <li key={doc.id} className={`check-item ${isDone ? "done" : ""}`} onClick={() => onDocClick(doc)}>
-                <div className="check-box">{isDone ? "✓" : ""}</div>
-                <span className="check-label">{doc.label}</span>
-                <span className={`check-status ${isDone ? "done" : "pending"}`}>
-                  {isDone ? uploadedDocs[doc.id].name : "Upload →"}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+  {form.documents.map((doc, index) => {
 
+    const isDone = !!uploadedDocs[doc.id];
+
+    // 🔒 Check if previous docs are uploaded
+    const isLocked = form.documents
+      .slice(0, index)
+      .some(d => !uploadedDocs[d.id]);
+
+    return (
+      <li
+        key={doc.id}
+        className={`check-item ${isDone ? "done" : ""}`}
+        onClick={() => {
+          if (isLocked) {
+            alert(`⚠ Please upload "${form.documents[index - 1].label}" first`);
+            return;
+          }
+          onDocClick(doc);
+        }}
+        style={{
+          opacity: isLocked ? 0.5 : 1,
+          cursor: isLocked ? "not-allowed" : "pointer"
+        }}
+      >
+        <div className="check-box">{isDone ? "✓" : ""}</div>
+
+        <span className="check-label">{doc.label}</span>
+
+        <span className={`check-status ${isDone ? "done" : "pending"}`}>
+          {isDone
+            ? uploadedDocs[doc.id].name
+            : isLocked
+              ? "Locked 🔒"
+              : "Upload →"}
+        </span>
+      </li>
+    );
+  })}
+</ul>
         {allUploaded && (
           <button className="btn-primary" onClick={onProceed}>
             Submit Application & Download Summary →

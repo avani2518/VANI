@@ -191,7 +191,24 @@ export default function App() {
     setStep("checklist");
   };
 
-  const handleDocClick = (doc) => { setActiveDoc(doc); setStep("upload"); };
+  //const handleDocClick = (doc) => { setActiveDoc(doc); setStep("upload"); };
+  const handleDocClick = (doc) => {
+
+  const docIndex = selectedForm.documents.findIndex(d => d.id === doc.id);
+
+  // Check if all previous docs are uploaded
+  for (let i = 0; i < docIndex; i++) {
+    const prevDoc = selectedForm.documents[i];
+
+    if (!uploadedDocs[prevDoc.id]) {
+      alert(`⚠ Please upload "${prevDoc.label}" first`);
+      return;
+    }
+  }
+
+  setActiveDoc(doc);
+  setStep("upload");
+};
 
   const handleUpload = (docId, file) => {
     setUploadedDocs((prev) => ({ ...prev, [docId]: file }));
