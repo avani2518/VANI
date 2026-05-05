@@ -196,7 +196,7 @@ export default function App() {
 
   const docIndex = selectedForm.documents.findIndex(d => d.id === doc.id);
 
-  // Check if all previous docs are uploaded
+  // Check if all previous documentss are uploaded
   for (let i = 0; i < docIndex; i++) {
     const prevDoc = selectedForm.documents[i];
 
