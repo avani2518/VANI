@@ -30,6 +30,8 @@ ocr = RapidOCR()
 API_KEY_OCR = os.getenv("NVIDIA_API_KEY_OCR")
 API_KEY_FORM = os.getenv("NVIDIA_API_KEY_FORM")
 
+MODEL = "google/gemma-3n-e4b-it"
+
 client_ocr = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
     api_key=API_KEY_OCR
@@ -201,7 +203,7 @@ def fill_form(extracted_data, form_type):
     }
 
     payload = {
-        "model": "google/gemma-3-27b-it",
+        "model": MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": 1024,
         "temperature": 0.2,
@@ -268,7 +270,7 @@ def call_model_combined(ocr_texts_by_type: dict):
     }
 
     payload = {
-        "model": "google/gemma-3-27b-it",
+        "model": MODEL,
         "messages": [
             {"role": "user", "content": prompt}
         ],
